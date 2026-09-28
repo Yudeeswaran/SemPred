@@ -12,12 +12,14 @@ The product skeleton is usable, but the current model does not meet the robust s
 - Local sparse baseline throughput: ~10.5k rows/sec on the 12k stress batch in this environment.
 
 ### Blocking result
-The classical champion scores 82.87% accuracy / 82.90% F1 / 84.83% AUROC on
-the 12k ultra-stress set. The best exploratory stress blend currently reaches
-85.64%, but its weight was selected on that same set and the blend scores only
-44.85% on hard cases. A stronger DeBERTa checkpoint reaches 78.25% on hard but
-62.13% on stress. No current candidate clears >=85% on both suites without
-benchmark-specific tuning; none is promotable.
+The user-set quality gate is at least 85% accuracy on every benchmark. The
+classical champion scores 82.87% accuracy on the 12k stress suite. A DeBERTa
+fine-tune reaches 85.16% on stress but only 49.37% on the hard suite. The
+zero-shot DeBERTa reaches 78.25% at the default threshold on hard cases and
+62.13% on stress; threshold sweeps peak at 78.99% and 71.31%, respectively.
+No current candidate clears 85% across both suites. The fine-tune's 99.15%
+family-holdout validation is from the same generated source corpus and is not
+independent evidence. None is promotable.
 
 This means the current model is learning lexical/topic correlations rather than reliably representing compositional semantics.
 
@@ -41,7 +43,8 @@ model's semantic-quality score or close the sellability gates below.
 ### Required before selling
 1. A reliable cross-encoder candidate that passes independent validation; current candidates fail.
 2. 10k+ newly authored, locked semantic stress cases with unseen wording and compositions.
-3. >=95% accuracy on the stress gate and >=98% on ordinary/hard evaluation.
+3. >=85% accuracy on every benchmark, including hard and stress suites, as
+   requested by the product owner.
 4. Workload-representative calibration and selective prediction.
 5. ONNX/INT8 inference benchmark and 1M+ row DuckDB throughput measurement.
 6. Demonstrated cost/latency advantage against a representative LLM baseline.

@@ -39,8 +39,9 @@ The SQL syntax is a product target; the current baseline is not yet the finished
 
 A sellable release requires all of these:
 
-1. robust semantic quality: >=95% on the locked compositional stress suite;
-2. ordinary/hard quality: >=98% on the specified evaluation suites;
+1. semantic quality: >=85% accuracy on every benchmark suite, including
+   compositional stress and hard cases;
+2. independent locked evaluation and external validation;
 3. calibration and selective prediction reported;
 4. 1M+ row benchmark completed;
 5. optimized/quantized inference benchmark completed;

@@ -1,0 +1,66 @@
+{
+  "model": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
+  "revision": "6f5cf0a2b59cabb106aca4c287eed12e357e90eb",
+  "hypothesis_template": "It is true that {predicate}.",
+  "dataset": "data\\sempred_32k_adversarial.jsonl",
+  "dataset_sha256": "4da11e309be800626d6eef1a0b268f2a9b4676545efd9265d0323ab23bf0d2f0",
+  "families_evaluated": [
+    "cancel",
+    "chargeback",
+    "pipeline",
+    "upgrade"
+  ],
+  "examples": 6340,
+  "device": "cpu",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+  "python": "3.13.5",
+  "torch": "2.14.0",
+  "transformers": "4.57.6",
+  "metrics": {
+    "accuracy": 0.9914826498422713,
+    "precision": 0.9835365853658536,
+    "recall": 1.0,
+    "f1": 0.9916999692591454,
+    "roc_auc": 0.9999073241218887,
+    "average_precision": 0.9999106080564522,
+    "brier": 0.00856569628309305,
+    "ece": 0.010106599358814382
+  },
+  "selective": {
+    "0.05": {
+      "coverage": 0.9996845425867508,
+      "accuracy_on_covered": 0.991479962133165,
+      "errors_on_covered": 54
+    },
+    "0.1": {
+      "coverage": 0.999211356466877,
+      "accuracy_on_covered": 0.9914759273875295,
+      "errors_on_covered": 54
+    },
+    "0.15": {
+      "coverage": 0.9990536277602524,
+      "accuracy_on_covered": 0.9916324597410799,
+      "errors_on_covered": 53
+    },
+    "0.2": {
+      "coverage": 0.9988958990536277,
+      "accuracy_on_covered": 0.9916311384809727,
+      "errors_on_covered": 53
+    },
+    "0.3": {
+      "coverage": 0.9966876971608832,
+      "accuracy_on_covered": 0.991612596929894,
+      "errors_on_covered": 53
+    },
+    "0.4": {
+      "coverage": 0.9938485804416404,
+      "accuracy_on_covered": 0.9915886367243295,
+      "errors_on_covered": 53
+    }
+  },
+  "elapsed_seconds": 35.23656989983283,
+  "model_load_seconds": 20.31928679998964,
+  "cold_total_seconds": 55.55585669982247,
+  "rows_per_second": 179.9267073390727
+}

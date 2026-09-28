@@ -32,6 +32,7 @@ def main() -> int:
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--revision", help="pinned revision for a local base Hugging Face checkpoint")
     parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--threshold", type=float, help="override the model decision threshold")
     parser.add_argument("--hypothesis-template", help="optional development override with one {predicate} placeholder")
     parser.add_argument("--holdout-family", action="append", default=[], help="score only matching family values from the source JSONL")
     args = parser.parse_args()
@@ -46,6 +47,10 @@ def main() -> int:
     model = load_nli_model(args.model, device=args.device, revision=args.revision)
     model_load_seconds = time.perf_counter() - model_load_started
     model.batch_size = args.batch_size
+    if args.threshold is not None:
+        if not 0.0 <= args.threshold <= 1.0:
+            parser.error("--threshold must be between 0 and 1")
+        model.threshold = args.threshold
     if args.hypothesis_template is not None:
         if args.hypothesis_template.count("{predicate}") != 1:
             parser.error("--hypothesis-template must contain exactly one {predicate} placeholder")
@@ -84,6 +89,13 @@ def main() -> int:
         except PackageNotFoundError:
             return None
 
+    threshold_sweep = {}
+    for threshold in (0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95):
+        metrics = evaluate(labels, probabilities, threshold=threshold)
+        threshold_sweep[f"{threshold:.2f}"] = {
+            name: metrics[name] for name in ("accuracy", "precision", "recall", "f1")
+        }
+
     result = {
         "model": model.model_id,
         "revision": model.revision,
@@ -99,6 +111,7 @@ def main() -> int:
         "torch": package_version("torch"),
         "transformers": package_version("transformers"),
         "metrics": evaluate(labels, probabilities, threshold=model.threshold),
+        "threshold_sweep": threshold_sweep,
         "selective": selective,
         "elapsed_seconds": elapsed,
         "model_load_seconds": model_load_seconds,

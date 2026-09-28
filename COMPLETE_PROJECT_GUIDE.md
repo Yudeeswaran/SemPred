@@ -562,8 +562,7 @@ The repository currently demonstrates:
 The repository does not currently prove:
 
 - production-grade semantic understanding;
-- >=95% stress accuracy;
-- >=98% ordinary/hard accuracy for the final model;
+- >=85% accuracy on every benchmark suite, including stress and hard cases;
 - million-row production throughput;
 - optimized neural inference latency;
 - a completed DuckDB extension;
@@ -580,8 +579,7 @@ SemPred can be called a sellable product only after all major gates pass:
 
 ### Quality
 
-- >=95% accuracy on the locked compositional stress suite;
-- >=98% ordinary/hard quality;
+- >=85% accuracy on every benchmark suite, including stress and hard cases;
 - external benchmark validation;
 - calibrated probabilities;
 - no critical semantic regression.

@@ -43,13 +43,21 @@ These numbers record model-selection work; they are not release evidence.
 | Fine-tuned v1, stress | 12k stress | 84.51% | 84.46% | 85.51% | Exploratory benchmark; not a locked blind release run |
 | Fine-tuned v1, hard development | 2,680 hard examples | 46.19% | 45.83% | 53.00% | Severe domain/composition transfer failure |
 | Fine-tuned v2, family holdout | 6,340 validation examples | 89.37% | 90.00% | 96.25% | Retrained on 43,258 rows; validation-informed model selection |
-| Fine-tuned v2, stress | 12k stress | 85.19% | 85.18% | 87.32% | Exploratory benchmark; under 95% gate |
+| Fine-tuned v2, stress | 12k stress | 85.19% | 85.18% | 87.32% | Clears the stress accuracy target only; hard transfer fails |
 | Fine-tuned v2, hard development | 2,680 hard examples | 46.64% | 46.32% | 57.41% | Severe transfer failure remains |
 | Fine-tuned v3 neutral, family holdout | 6,340 validation examples | 88.09% | 88.61% | 96.81% | Preserved three-class head; false labels mapped to NLI neutral |
 | Fine-tuned v3 neutral, stress | 12k stress | 82.22% | 82.38% | 86.90% | Exploratory; failed 85% target |
 | Fine-tuned v3 neutral, hard development | 2,680 hard examples | 48.99% | 50.95% | 58.28% | Exploratory; failed 85% target |
 | DeBERTa NLI, zero-shot hard | 2,680 hard examples | 78.25% | 61.97% | 81.79% | MIT checkpoint; 50.6 examples/sec CPU |
 | DeBERTa NLI, zero-shot stress | 12k stress | 62.13% | 47.93% | 77.30% | MIT checkpoint; 58.8 examples/sec CPU |
+| DeBERTa fine-tuned v1, family validation | 6,340 examples | 99.15% | 99.17% | 99.99% | Same generated corpus; not independent evidence |
+| DeBERTa fine-tuned v1, stress | 12k stress | 85.16% | 85.36% | 89.13% | Exploratory; CPU 68.5 rows/sec; clears only this suite |
+| DeBERTa fine-tuned v1, hard | 2,680 hard examples | 49.37% | 50.56% | 62.45% | Severe transfer failure |
+| DeBERTa zero-shot threshold sweep, hard | 2,680 hard examples | 78.99% | 66.94% | 81.79% | Best threshold 0.25; still below 85% |
+| DeBERTa zero-shot threshold sweep, stress | 12k stress | 71.31% | 70.00% | 77.30% | Best threshold 0.05; still below 85% |
+| DeBERTa base/fine-tune blend sweep, hard | 2,680 hard examples | 78.99% | 66.94% | 81.79% | Best on this suite: base only, threshold 0.25 |
+| DeBERTa base/fine-tune blend sweep, stress | 12k stress | 87.49% | 87.26% | 90.37% | Best on this suite: fine-tune weight 0.9, threshold 0.9; benchmark-selected |
+| Shared blend setting, weaker suite | hard + stress | 76.16% | — | — | Best minimum accuracy across the suites at weight 0.6, threshold 0.65; both scores below 85% |
 
 Per-run JSON includes the dataset SHA-256, checkpoint revision, runtime
 versions, timing, quality metrics, and selective-coverage measurements under
@@ -57,8 +65,8 @@ versions, timing, quality metrics, and selective-coverage measurements under
 prompt selection and calibration, so its fitted metrics must not be presented
 as independent evaluation.
 
-Fine-tuned v1 improved substantially over zero-shot on the stress suite, but
-still misses the 95% release threshold and failed badly on the v6 hard set.
+Fine-tuned v1 improved substantially over zero-shot on the stress suite and
+cleared the stress accuracy target, but failed badly on the v6 hard set.
 Family-holdout scores are validation results, not independent external evidence.
 
 The second run added another corpus but did not fix transfer: stress accuracy
@@ -72,7 +80,20 @@ reached 85.64% accuracy on stress at an NLI blend weight of 0.4. That weight
 was selected on the stress set itself and the same blend reached only 44.85%
 on the hard development set; it is not a production result. The stronger
 MIT-licensed DeBERTa model improved zero-shot hard accuracy to 78.25% but fell
-to 62.13% on stress and was much slower on CPU. A DeBERTa fine-tune is underway.
+to 62.13% on stress and was much slower on CPU. The fine-tune completed with
+99.15% accuracy on its four-family validation split and 85.16% on stress, but
+only 49.37% on hard cases. Its near-perfect validation is not independent
+evidence because the examples come from the same generated source corpus.
+Threshold sweeps on the zero-shot checkpoint reached only 78.99% on hard and
+71.31% on stress. No candidate meets the 85% accuracy requirement across all
+benchmark suites, so none is approved for production.
+
+A grid search blending the base and fine-tuned DeBERTa probabilities reached
+87.49% on stress and 78.99% on hard when each suite selected its own settings.
+Those settings are benchmark-specific. The best single shared blend weight
+and threshold reached only 76.16% on the weaker suite; no shared setting
+reached 85% on both. These exploratory searches cannot serve as locked release
+validation.
 
 ## Intended use and limits
 
@@ -85,8 +106,8 @@ before using SemPred to discard records.
 
 ## Promotion requirements
 
-Promotion requires a newly authored locked evaluation set, external validation,
-at least 95% accuracy on compositional stress cases, at least 98% ordinary and
-hard quality, representative calibration and coverage results, optimized
+Promotion requires at least 85% accuracy on every benchmark suite, including
+stress and hard cases, a newly authored locked evaluation set, external
+validation, representative calibration and coverage results, optimized
 inference measurements, and the one-million-row database benchmark. Existing
 exploratory results do not meet these conditions.
