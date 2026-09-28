@@ -10,7 +10,7 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from benchmark.metrics import evaluate
-from sempred.nli import NLISemPred
+from benchmark.model_loading import load_nli_model
 
 
 def read_jsonl(path: Path) -> list[dict]:
@@ -30,6 +30,7 @@ def main() -> int:
     parser.add_argument("--dataset", type=Path, required=True, help="locked JSONL benchmark file")
     parser.add_argument("--output", type=Path, required=True, help="metrics JSON output path")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
+    parser.add_argument("--revision", help="pinned revision for a local base Hugging Face checkpoint")
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--hypothesis-template", help="optional development override with one {predicate} placeholder")
     parser.add_argument("--holdout-family", action="append", default=[], help="score only matching family values from the source JSONL")
@@ -42,7 +43,7 @@ def main() -> int:
         if not rows:
             parser.error("no rows matched --holdout-family")
     model_load_started = time.perf_counter()
-    model = NLISemPred.load(args.model, device=args.device)
+    model = load_nli_model(args.model, device=args.device, revision=args.revision)
     model_load_seconds = time.perf_counter() - model_load_started
     model.batch_size = args.batch_size
     if args.hypothesis_template is not None:

@@ -13,9 +13,11 @@ The product skeleton is usable, but the current model does not meet the robust s
 
 ### Blocking result
 The classical champion scores 82.87% accuracy / 82.90% F1 / 84.83% AUROC on
-the 12k ultra-stress set. The first fine-tuned NLI candidate reached 84.51%
-accuracy / 84.46% F1 on the same exploratory stress benchmark, then failed
-the v6 hard development suite at 46.19% accuracy. It is not promotable.
+the 12k ultra-stress set. The best exploratory stress blend currently reaches
+85.64%, but its weight was selected on that same set and the blend scores only
+44.85% on hard cases. A stronger DeBERTa checkpoint reaches 78.25% on hard but
+62.13% on stress. No current candidate clears >=85% on both suites without
+benchmark-specific tuning; none is promotable.
 
 This means the current model is learning lexical/topic correlations rather than reliably representing compositional semantics.
 
@@ -31,6 +33,7 @@ This means the current model is learning lexical/topic correlations rather than 
 - Added a pinned pretrained NLI integration, calibration, and family-held-out fine-tuning path.
 - Added six automated core, calibration, and DuckDB tests and verified that all pass.
 - Built a distributable Python wheel successfully.
+- Added model comparison tooling and tested an MIT-licensed DeBERTa NLI checkpoint.
 
 The product workflow is easier to try, but these changes do not affect the
 model's semantic-quality score or close the sellability gates below.

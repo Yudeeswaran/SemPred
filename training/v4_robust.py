@@ -96,6 +96,7 @@ for name,(a,b,h,m) in variants.items():
  with open(ART/(name+'.pkl'),'wb') as f: pickle.dump((m,word,char),f)
 best=max(res,key=lambda n:(res[n]['hard']['f1'],res[n]['hard']['auc'],res[n]['test']['f1']))
 out={'version':'v4','dataset_size':len(rows),'train':len(tr),'test':len(te),'hard':len(H),'predicates':len(F),'best':best,'results':res}
-(DATA/'sempred_24k.jsonl').write_text('\n'.join(json.dumps({'text':a,'predicate':b,'label':c,'family':d}) for a,b,c,d in rows))
+if not (DATA/'sempred_24k.jsonl').exists():
+ (DATA/'sempred_24k.jsonl').write_text('\n'.join(json.dumps({'text':a,'predicate':b,'label':c,'family':d}) for a,b,c,d in rows))
 (ART/'v4_results.json').write_text(json.dumps(out,indent=2))
 print(json.dumps(out,indent=2))

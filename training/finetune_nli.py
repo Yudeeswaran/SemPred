@@ -41,6 +41,9 @@ def load_jsonl(paths: list[Path]) -> tuple[list[dict], dict[str, str]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-model", type=Path, default=Path("models/sempred-nli-v2"))
+    parser.add_argument("--base-model-id", help="source model name for metadata when base-model is a raw local HF checkpoint")
+    parser.add_argument("--base-revision", help="immutable source revision for metadata on raw HF checkpoints")
+    parser.add_argument("--hypothesis-template", help="override hypothesis wording with one {predicate} placeholder")
     parser.add_argument("--train-data", type=Path, action="append", default=[])
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--epochs", type=int, default=2)
@@ -61,7 +64,7 @@ def main() -> int:
     try:
         import torch
         from torch.utils.data import DataLoader
-        from transformers import AutoModelForSequenceClassification
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer
     except ImportError as exc:
         raise RuntimeError("Install the NLI and training extras before fine-tuning") from exc
 
@@ -93,13 +96,31 @@ def main() -> int:
         raise RuntimeError("CUDA was requested, but PyTorch cannot access a CUDA device")
     device = torch.device(args.device)
 
-    base = NLISemPred.load(args.base_model, device=args.device)
-    tokenizer = base.tokenizer
-    model = AutoModelForSequenceClassification.from_pretrained(
-        str(args.base_model),
-        local_files_only=True,
-        use_safetensors=True,
-    ).to(device)
+    metadata_path = args.base_model / "sempred-nli.json"
+    if metadata_path.is_file():
+        base = NLISemPred.load(args.base_model, device=args.device)
+        tokenizer = base.tokenizer
+        model = base.model
+        if args.hypothesis_template is not None:
+            if args.hypothesis_template.count("{predicate}") != 1:
+                parser.error("--hypothesis-template must contain exactly one {predicate} placeholder")
+            base.hypothesis_template = args.hypothesis_template
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(str(args.base_model), local_files_only=True)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            str(args.base_model), local_files_only=True, use_safetensors=True
+        ).to(device)
+        hypothesis_template = args.hypothesis_template or "It is true that {predicate}."
+        if hypothesis_template.count("{predicate}") != 1:
+            parser.error("--hypothesis-template must contain exactly one {predicate} placeholder")
+        base = NLISemPred(
+            tokenizer,
+            model,
+            device=args.device,
+            model_id=args.base_model_id or str(args.base_model),
+            revision=args.base_revision,
+            hypothesis_template=hypothesis_template,
+        )
     nli_label_ids = {str(label).lower(): int(index) for index, label in model.config.id2label.items()}
     entailment_id = next((index for label, index in nli_label_ids.items() if label == "entailment"), None)
     negative_id = next((index for label, index in nli_label_ids.items() if label == args.negative_nli_label), None)

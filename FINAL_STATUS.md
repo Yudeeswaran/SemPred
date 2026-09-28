@@ -30,8 +30,11 @@ Full fine-tuning on adversarial corpora with family-held-out validation is imple
 
 - Fine-tuned v1: 84.51% accuracy on stress; 46.19% on hard.
 - Fine-tuned v2 (43,258 training rows): 85.19% on stress; 46.64% on hard.
+- Fine-tuned v3 with the original NLI three-class head: 82.22% on stress; 48.99% on hard.
+- DeBERTa zero-shot: 62.13% on stress; 78.25% on hard at about 59 rows/sec CPU.
+- A classical/NLI blend hit 85.64% stress only after tuning on that same benchmark, and scored 44.85% on hard; this is a development result, not a release result.
 
-Neither model is promotable. Results are exploratory and their source benchmarks were used during model development.
+No model is promotable. Results are exploratory and their source benchmarks were used during model development. A DeBERTa fine-tune is in progress.
 
 ## Iterations
 V0.1: baseline API + synthetic data

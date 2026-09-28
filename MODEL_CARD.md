@@ -36,6 +36,11 @@ These numbers record model-selection work; they are not release evidence.
 | Fine-tuned v2, family holdout | 6,340 validation examples | 89.37% | 90.00% | 96.25% | Retrained on 43,258 rows; validation-informed model selection |
 | Fine-tuned v2, stress | 12k stress | 85.19% | 85.18% | 87.32% | Exploratory benchmark; under 95% gate |
 | Fine-tuned v2, hard development | 2,680 hard examples | 46.64% | 46.32% | 57.41% | Severe transfer failure remains |
+| Fine-tuned v3 neutral, family holdout | 6,340 validation examples | 88.09% | 88.61% | 96.81% | Preserved three-class head; false labels mapped to NLI neutral |
+| Fine-tuned v3 neutral, stress | 12k stress | 82.22% | 82.38% | 86.90% | Exploratory; failed 85% target |
+| Fine-tuned v3 neutral, hard development | 2,680 hard examples | 48.99% | 50.95% | 58.28% | Exploratory; failed 85% target |
+| DeBERTa NLI, zero-shot hard | 2,680 hard examples | 78.25% | 61.97% | 81.79% | MIT checkpoint; 50.6 examples/sec CPU |
+| DeBERTa NLI, zero-shot stress | 12k stress | 62.13% | 47.93% | 77.30% | MIT checkpoint; 58.8 examples/sec CPU |
 
 Per-run JSON includes the dataset SHA-256, checkpoint revision, runtime
 versions, timing, quality metrics, and selective-coverage measurements under
@@ -52,6 +57,13 @@ was 85.19%, while hard-set accuracy was 46.64%. The training harness now also
 supports mapping SemPred negatives to the pretrained NLI `neutral` class,
 because many false predicate pairs are not explicit contradictions. This is
 an exploratory training strategy; it still needs independent validation.
+
+An arithmetic blend of the classical hybrid and fine-tuned v3 neutral model
+reached 85.64% accuracy on stress at an NLI blend weight of 0.4. That weight
+was selected on the stress set itself and the same blend reached only 44.85%
+on the hard development set; it is not a production result. The stronger
+MIT-licensed DeBERTa model improved zero-shot hard accuracy to 78.25% but fell
+to 62.13% on stress and was much slower on CPU. A DeBERTa fine-tune is underway.
 
 ## Intended use and limits
 
