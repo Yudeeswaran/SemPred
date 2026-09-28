@@ -24,6 +24,34 @@ def read_jsonl(path: Path) -> list[dict]:
     return rows
 
 
+def evaluate_families(
+    rows: list[dict], labels: list[int], probabilities: list[float], threshold: float
+) -> dict[str, dict]:
+    """Report suite metrics by family, including accuracy for single-class groups."""
+    groups: dict[str, list[int]] = {}
+    for index, row in enumerate(rows):
+        groups.setdefault(str(row.get("family", "unassigned")), []).append(index)
+
+    results = {}
+    for family, indices in sorted(groups.items()):
+        family_labels = [labels[index] for index in indices]
+        family_scores = [probabilities[index] for index in indices]
+        if len(set(family_labels)) == 2:
+            metrics = evaluate(family_labels, family_scores, threshold=threshold)
+        else:
+            correct = sum(
+                (score >= threshold) == bool(label)
+                for label, score in zip(family_labels, family_scores)
+            )
+            metrics = {"accuracy": correct / len(indices)}
+        results[family] = {
+            "examples": len(indices),
+            "positive_examples": sum(family_labels),
+            "metrics": metrics,
+        }
+    return results
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", type=Path, required=True, help="saved local SemPred NLI model directory")
@@ -111,6 +139,7 @@ def main() -> int:
         "torch": package_version("torch"),
         "transformers": package_version("transformers"),
         "metrics": evaluate(labels, probabilities, threshold=model.threshold),
+        "per_family": evaluate_families(rows, labels, probabilities, model.threshold),
         "threshold_sweep": threshold_sweep,
         "selective": selective,
         "elapsed_seconds": elapsed,
