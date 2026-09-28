@@ -22,6 +22,15 @@ label names, applies bounded batching, and stores models in safe-tensor format.
 The model files are downloaded separately and are not included in this source
 repository.
 
+### Larger NLI experiment
+
+- Model: [`MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli`](https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli)
+- Revision: `6f5cf0a2b59cabb106aca4c287eed12e357e90eb`
+- License reported by the model repository: MIT
+- Training sources listed by the repository: MultiNLI, FEVER, and ANLI
+- Size: approximately 184 million parameters
+- Checkpoint is local under `models/` and ignored by Git.
+
 ## Exploratory results
 
 These numbers record model-selection work; they are not release evidence.
