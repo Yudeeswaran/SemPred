@@ -1,0 +1,66 @@
+{
+  "model": "cross-encoder/nli-MiniLM2-L6-H768",
+  "revision": "c847a3c0e1cad93a5343183ef183f3044e3fc7c2",
+  "hypothesis_template": "It is true that {predicate}.",
+  "dataset": "data\\sempred_32k_adversarial.jsonl",
+  "dataset_sha256": "4da11e309be800626d6eef1a0b268f2a9b4676545efd9265d0323ab23bf0d2f0",
+  "families_evaluated": [
+    "cancel",
+    "chargeback",
+    "pipeline",
+    "upgrade"
+  ],
+  "examples": 6340,
+  "device": "cpu",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+  "python": "3.13.5",
+  "torch": "2.14.0",
+  "transformers": "4.57.6",
+  "metrics": {
+    "accuracy": 0.8936908517350157,
+    "precision": 0.8629124004550626,
+    "recall": 0.9404835709857409,
+    "f1": 0.9000296647878968,
+    "roc_auc": 0.9624867257482855,
+    "average_precision": 0.9618290169268495,
+    "brier": 0.10316015856887471,
+    "ece": 0.10449714125379644
+  },
+  "selective": {
+    "0.05": {
+      "coverage": 1.0,
+      "accuracy_on_covered": 0.8936908517350157,
+      "errors_on_covered": 674
+    },
+    "0.1": {
+      "coverage": 0.9996845425867508,
+      "accuracy_on_covered": 0.8938150836225939,
+      "errors_on_covered": 673
+    },
+    "0.15": {
+      "coverage": 0.9973186119873817,
+      "accuracy_on_covered": 0.8959354736675629,
+      "errors_on_covered": 658
+    },
+    "0.2": {
+      "coverage": 0.9968454258675079,
+      "accuracy_on_covered": 0.8960443037974684,
+      "errors_on_covered": 657
+    },
+    "0.3": {
+      "coverage": 0.9938485804416404,
+      "accuracy_on_covered": 0.8984288208220917,
+      "errors_on_covered": 640
+    },
+    "0.4": {
+      "coverage": 0.9927444794952681,
+      "accuracy_on_covered": 0.8992691452176677,
+      "errors_on_covered": 634
+    }
+  },
+  "elapsed_seconds": 22.065774400020018,
+  "model_load_seconds": 54.58719069999643,
+  "cold_total_seconds": 76.65296510001644,
+  "rows_per_second": 287.3227961577568
+}

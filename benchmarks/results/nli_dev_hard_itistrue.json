@@ -1,0 +1,22 @@
+{
+  "model": "cross-encoder/nli-MiniLM2-L6-H768",
+  "revision": "c847a3c0e1cad93a5343183ef183f3044e3fc7c2",
+  "hypothesis_template": "It is true that {predicate}.",
+  "dataset": "data\\sempred_v6_hard.jsonl",
+  "dataset_sha256": "70313481f60d2539a8c10084b4837694b3424f1e6de6f6da6dba26d1f32393cc",
+  "examples": 2680,
+  "device": "cpu",
+  "python": "3.13.5",
+  "metrics": {
+    "accuracy": 0.6828358208955224,
+    "precision": 0.8571428571428571,
+    "recall": 0.013953488372093023,
+    "f1": 0.02745995423340961,
+    "roc_auc": 0.7656625351392794,
+    "average_precision": 0.6232028871311303,
+    "brier": 0.2724630634766862,
+    "ece": 0.2742907496994759
+  },
+  "elapsed_seconds": 16.038278799969703,
+  "rows_per_second": 167.1002252439372
+}

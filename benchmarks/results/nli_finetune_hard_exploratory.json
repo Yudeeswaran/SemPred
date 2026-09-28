@@ -1,0 +1,82 @@
+{
+  "model": "cross-encoder/nli-MiniLM2-L6-H768",
+  "revision": "c847a3c0e1cad93a5343183ef183f3044e3fc7c2",
+  "hypothesis_template": "It is true that {predicate}.",
+  "dataset": "data\\sempred_v6_hard.jsonl",
+  "dataset_sha256": "70313481f60d2539a8c10084b4837694b3424f1e6de6f6da6dba26d1f32393cc",
+  "families_evaluated": [
+    "account_lock",
+    "address_change",
+    "billing",
+    "bug",
+    "cancel",
+    "chargeback",
+    "delivery",
+    "duplicate",
+    "export",
+    "fraud",
+    "late_payment",
+    "negative_review",
+    "password_reset",
+    "pii",
+    "pipeline",
+    "positive_review",
+    "refund",
+    "schema",
+    "security_incident",
+    "upgrade"
+  ],
+  "examples": 2680,
+  "device": "cpu",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+  "python": "3.13.5",
+  "torch": "2.14.0",
+  "transformers": "4.57.6",
+  "metrics": {
+    "accuracy": 0.4619402985074627,
+    "precision": 0.33851276359600446,
+    "recall": 0.7093023255813954,
+    "f1": 0.45830202854996244,
+    "roc_auc": 0.5299958471760797,
+    "average_precision": 0.33020875794754534,
+    "brier": 0.4227615688941078,
+    "ece": 0.4309597372640791
+  },
+  "selective": {
+    "0.05": {
+      "coverage": 0.9981343283582089,
+      "accuracy_on_covered": 0.46205607476635513,
+      "errors_on_covered": 1439
+    },
+    "0.1": {
+      "coverage": 0.996268656716418,
+      "accuracy_on_covered": 0.46179775280898877,
+      "errors_on_covered": 1437
+    },
+    "0.15": {
+      "coverage": 0.9906716417910447,
+      "accuracy_on_covered": 0.46214689265536724,
+      "errors_on_covered": 1428
+    },
+    "0.2": {
+      "coverage": 0.9865671641791045,
+      "accuracy_on_covered": 0.462178517397882,
+      "errors_on_covered": 1422
+    },
+    "0.3": {
+      "coverage": 0.9779850746268657,
+      "accuracy_on_covered": 0.46318199160625717,
+      "errors_on_covered": 1407
+    },
+    "0.4": {
+      "coverage": 0.31455223880597016,
+      "accuracy_on_covered": 0.727164887307236,
+      "errors_on_covered": 230
+    }
+  },
+  "elapsed_seconds": 17.688196300063282,
+  "model_load_seconds": 3.7743622998241335,
+  "cold_total_seconds": 21.462558599887416,
+  "rows_per_second": 151.51347003031688
+}

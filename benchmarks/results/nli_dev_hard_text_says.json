@@ -1,0 +1,22 @@
+{
+  "model": "cross-encoder/nli-MiniLM2-L6-H768",
+  "revision": "c847a3c0e1cad93a5343183ef183f3044e3fc7c2",
+  "hypothesis_template": "The text says that {predicate}.",
+  "dataset": "data\\sempred_v6_hard.jsonl",
+  "dataset_sha256": "70313481f60d2539a8c10084b4837694b3424f1e6de6f6da6dba26d1f32393cc",
+  "examples": 2680,
+  "device": "cpu",
+  "python": "3.13.5",
+  "metrics": {
+    "accuracy": 0.6615671641791044,
+    "precision": 0.42443729903536975,
+    "recall": 0.15348837209302327,
+    "f1": 0.22544833475661827,
+    "roc_auc": 0.6073032200357782,
+    "average_precision": 0.39171019632103843,
+    "brier": 0.2680586703011744,
+    "ece": 0.21996003486003868
+  },
+  "elapsed_seconds": 15.623406499857083,
+  "rows_per_second": 171.5374940813654
+}

@@ -1,0 +1,21 @@
+{
+  "model": "cross-encoder/nli-MiniLM2-L6-H768",
+  "revision": "c847a3c0e1cad93a5343183ef183f3044e3fc7c2",
+  "dataset": "data\\sempred_v6_hard.jsonl",
+  "dataset_sha256": "70313481f60d2539a8c10084b4837694b3424f1e6de6f6da6dba26d1f32393cc",
+  "examples": 2680,
+  "device": "cpu",
+  "python": "3.13.5",
+  "metrics": {
+    "accuracy": 0.664179104477612,
+    "precision": 0.4657534246575342,
+    "recall": 0.31627906976744186,
+    "f1": 0.3767313019390582,
+    "roc_auc": 0.6470010222335804,
+    "average_precision": 0.45919045805505715,
+    "brier": 0.24888015892459817,
+    "ece": 0.19173782094438332
+  },
+  "elapsed_seconds": 12.757269700057805,
+  "rows_per_second": 210.07629869170648
+}
