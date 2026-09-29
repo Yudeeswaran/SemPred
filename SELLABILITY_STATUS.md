@@ -19,7 +19,10 @@ zero-shot DeBERTa reaches 78.25% at the default threshold on hard cases and
 62.13% on stress; threshold sweeps peak at 78.99% and 71.31%, respectively.
 No current candidate clears 85% across both suites. The fine-tune's 99.15%
 family-holdout validation is from the same generated source corpus and is not
-independent evidence. None is promotable.
+independent evidence. A label audit flags 9,983 of the 32,000 generated
+training rows for review because their hypothetical, negation, speaker, or
+historical wrapper may conflict with the inherited label. These are review
+candidates, not confirmed errors. None is promotable.
 
 This means the current model is learning lexical/topic correlations rather than reliably representing compositional semantics.
 
@@ -32,13 +35,16 @@ This means the current model is learning lexical/topic correlations rather than 
 - Added DuckDB `SEM_SCORE` and tri-state `SEM_PREDICT` functions (`unknown` becomes SQL `NULL`).
 - Bounded the local prediction cache and documented trusted-only pickle loading.
 - Rewrote the README around install, train, Python, and DuckDB workflows.
-- Added a pinned pretrained NLI integration, calibration, and family-held-out fine-tuning path.
+- Made the pinned pretrained NLI cross-encoder the default CLI training path; TF-IDF remains an explicit baseline.
+- Changed validation to hold out composition patterns before falling back to families.
+- Added a training-label audit that flags potentially contradictory adversarial examples for review.
 - Added six automated core, calibration, and DuckDB tests and verified that all pass.
 - Built a distributable Python wheel successfully.
 - Added model comparison tooling and tested an MIT-licensed DeBERTa NLI checkpoint.
 
-The product workflow is easier to try, but these changes do not affect the
-model's semantic-quality score or close the sellability gates below.
+The default architecture and validation workflow have changed. This does not
+improve the current checkpoint's measured scores or close the sellability gates
+below. The generated training labels need review before the next fine-tune.
 
 ### Required before selling
 1. A reliable cross-encoder candidate that passes independent validation; current candidates fail.

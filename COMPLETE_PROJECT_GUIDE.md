@@ -795,3 +795,28 @@ Full NLI fine-tuning now holds out whole predicate families from the 32k
 adversarial corpus for validation. A fine-tuned result still has to meet the
 ordinary, hard, compositional, external, calibration, systems, and integration
 gates before SemPred can be described as sellable.
+
+---
+
+# 31. Current model workflow — 2026-09-29
+
+The earlier sections describe historical iterations. The product CLI now uses
+the pinned DeBERTa NLI cross-encoder for `sempred train` by default; users must
+select `--backend tfidf` to train the lexical baseline. The DeBERTa checkpoint
+is downloaded separately and remains outside Git.
+
+The fine-tuning validator now holds out recognized composition patterns such
+as hypothetical, attributed, historical, and negated text. It falls back to
+predicate-family groups for data without enough distinct patterns. This makes
+the validation more resistant to wrapper leakage, but it does not repair noisy
+labels or substitute for independently authored evaluation data.
+
+The built-in corpus audit flags 9,983 of 32,000 rows for manual review because
+some transformation wrappers may conflict with the inherited label. These
+flags are not automatic relabeling decisions. Review and correct the training
+data before starting another fine-tune.
+
+The current candidate clears 85% on the stress set but scores only 49% on the
+hard set. No model has met the 85% target on every suite; the product is still
+a developer preview. Current instructions are in `README.md`, measured status
+is in `SELLABILITY_STATUS.md`, and detailed scores are in `MODEL_CARD.md`.

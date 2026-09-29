@@ -14,9 +14,9 @@ SemPred is a local/open-weight semantic predicate engine for evaluating natural-
 ## Example API
 
 ```python
-from sempred import SemPred
+from sempred import NLISemPred
 
-model = SemPred.fit(texts, predicates, labels)
+model = NLISemPred.load("models/sempred-finetuned")
 result = model.predict(
     "The package arrived three days late and the customer wants a refund.",
     "customer is requesting a refund",
@@ -33,7 +33,8 @@ FROM support_tickets
 WHERE SEM_PREDICT(ticket_text, 'customer is requesting a refund');
 ```
 
-The SQL syntax is a product target; the current baseline is not yet the finished DuckDB extension.
+The package exposes these SQL functions through its DuckDB adapter. Large-scale
+latency and one-million-row throughput remain to be measured.
 
 ## Release gates
 
@@ -54,20 +55,19 @@ The current repository does not pass all gates.
 
 ## Current developer preview
 
-The Python package now includes an installable command line for training from
+The Python package includes a transformer-first command line for fine-tuning
 labeled JSONL, single-pair prediction, a bounded in-memory cache, and optional
-DuckDB score/tri-state functions. With PyArrow the DuckDB adapter uses Arrow
-chunks and the batch API; without it the adapter falls back to scalar Python
-UDFs. The vectorized path still needs an end-to-end million-row benchmark
-before its throughput can be claimed. The TF-IDF model artifact uses Python
-pickle and must only be loaded from a trusted source; downloaded NLI weights
-use safe-tensor files.
+DuckDB score/tri-state functions. With PyArrow, the DuckDB adapter uses Arrow
+chunks and the batch API; without it, the adapter uses scalar Python UDFs. The
+vectorized path still needs an end-to-end million-row benchmark. Downloaded NLI
+weights use safe-tensor files. The legacy TF-IDF model uses Python pickle and
+should only be loaded from a trusted source.
 
-The included classifier remains a TF-IDF/logistic-regression research baseline.
-Its 82.87% accuracy on the retained compositional stress set is below the
-required threshold. The CLI and integrations make the prototype easier to try;
-they do not change that quality result or qualify the engine for production
-semantic filtering.
+The preferred runtime and training workflow use a pretrained NLI
+cross-encoder. The TF-IDF/logistic-regression implementation remains an
+explicit fast baseline; its 82.87% accuracy on the retained compositional
+stress set is below the release gate. The NLI fine-tune has not met 85% on every
+suite either, so neither backend is approved for production filtering.
 
 ## Release checklist
 

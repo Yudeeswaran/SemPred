@@ -15,8 +15,8 @@ from pathlib import Path
 from .calibration import apply_binary_calibration, calibrate_binary_scores
 from .core import Prediction, SemPred
 
-DEFAULT_MODEL_ID = "cross-encoder/nli-MiniLM2-L6-H768"
-DEFAULT_MODEL_REVISION = "c847a3c0e1cad93a5343183ef183f3044e3fc7c2"
+DEFAULT_MODEL_ID = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
+DEFAULT_MODEL_REVISION = "6f5cf0a2b59cabb106aca4c287eed12e357e90eb"
 _CONFIG_NAME = "sempred-nli.json"
 
 
@@ -36,7 +36,7 @@ class NLISemPred:
         batch_size: int = 32,
         model_id: str = DEFAULT_MODEL_ID,
         revision: str | None = DEFAULT_MODEL_REVISION,
-        hypothesis_template: str = "{predicate}",
+        hypothesis_template: str = "It is true that {predicate}.",
     ):
         import torch
 
@@ -96,7 +96,7 @@ class NLISemPred:
         cache_size: int = 10_000,
         max_length: int = 256,
         batch_size: int = 32,
-        hypothesis_template: str = "{predicate}",
+        hypothesis_template: str = "It is true that {predicate}.",
     ) -> NLISemPred:
         try:
             from transformers import AutoModelForSequenceClassification, AutoTokenizer

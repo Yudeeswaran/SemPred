@@ -22,11 +22,11 @@ class Prediction:
 
 
 class SemPred:
-    """V1 semantic-predicate classifier.
+    """Legacy TF-IDF/logistic-regression baseline.
 
-    This first implementation deliberately uses a transparent TF-IDF + logistic
-    regression cross-input baseline. The public API is designed to remain stable
-    when the model is replaced by the compact encoder in V2.
+    Use :class:`sempred.nli.NLISemPred` for the transformer cross-encoder
+    backend. This class stays available for fast lexical baselines and existing
+    serialized models.
     """
 
     def __init__(self, pipeline: Pipeline, threshold: float = 0.5, abstain_margin: float = 0.0, cache_size: int = 10_000):

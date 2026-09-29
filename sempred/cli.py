@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 import sys
 from dataclasses import asdict
 from pathlib import Path
@@ -35,6 +36,43 @@ def _train(args: argparse.Namespace) -> int:
         missing = required - row.keys()
         if missing:
             raise ValueError(f"{args.data}: row {i} is missing {', '.join(sorted(missing))}")
+    if args.backend == "nli":
+        if not args.base_model.is_dir():
+            raise ValueError(
+                f"NLI checkpoint not found at {args.base_model}; first run "
+                f"`sempred download-nli --output {args.base_model}`"
+            )
+        command = [
+            sys.executable,
+            "-m",
+            "training.finetune_nli",
+            "--base-model",
+            str(args.base_model),
+            "--train-data",
+            str(args.data),
+            "--output",
+            str(args.model),
+            "--epochs",
+            str(args.epochs),
+            "--batch-size",
+            str(args.batch_size),
+            "--learning-rate",
+            str(args.learning_rate),
+            "--max-length",
+            str(args.max_length),
+            "--validation-split",
+            args.validation_split,
+            "--validation-group-count",
+            str(args.validation_group_count),
+            "--negative-nli-label",
+            args.negative_nli_label,
+            "--device",
+            args.device,
+        ]
+        if args.seed is not None:
+            command.extend(("--seed", str(args.seed)))
+        return subprocess.run(command, check=False).returncode
+
     model = SemPred.fit(
         [row["text"] for row in rows],
         [row["predicate"] for row in rows],
@@ -43,7 +81,7 @@ def _train(args: argparse.Namespace) -> int:
         abstain_margin=args.abstain_margin,
     )
     model.save(args.model)
-    print(json.dumps({"model": str(args.model), "examples": len(rows), "backend": "tfidf-logistic-regression"}))
+    print(json.dumps({"model": str(args.model), "examples": len(rows), "backend": "tfidf-baseline"}))
     return 0
 
 
@@ -109,14 +147,25 @@ def _calibrate(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="sempred", description="Train and query a local semantic-predicate baseline.")
+    parser = argparse.ArgumentParser(prog="sempred", description="Train and query a local semantic-predicate model.")
     commands = parser.add_subparsers(dest="command", required=True)
 
-    train = commands.add_parser("train", help="train a local model from labeled JSONL")
+    train = commands.add_parser("train", help="fine-tune an NLI encoder from labeled JSONL")
     train.add_argument("--data", type=Path, required=True, help="JSONL with text, predicate, and binary label fields")
     train.add_argument("--model", type=Path, required=True, help="output path for the trained model")
-    train.add_argument("--threshold", type=float, default=0.5)
-    train.add_argument("--abstain-margin", type=float, default=0.0)
+    train.add_argument("--backend", choices=("nli", "tfidf"), default="nli", help="use the semantic encoder by default; tfidf is a baseline")
+    train.add_argument("--base-model", type=Path, default=Path("models/sempred-nli"), help="local checkpoint directory saved by download-nli")
+    train.add_argument("--epochs", type=int, default=1)
+    train.add_argument("--batch-size", type=int, default=32)
+    train.add_argument("--learning-rate", type=float, default=2e-5)
+    train.add_argument("--max-length", type=int, default=128)
+    train.add_argument("--negative-nli-label", choices=("neutral", "contradiction"), default="neutral")
+    train.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
+    train.add_argument("--seed", type=int, default=42)
+    train.add_argument("--validation-split", choices=("auto", "construction", "family"), default="auto")
+    train.add_argument("--validation-group-count", type=int, default=2)
+    train.add_argument("--threshold", type=float, default=0.5, help="decision threshold for the TF-IDF baseline")
+    train.add_argument("--abstain-margin", type=float, default=0.0, help="abstention margin for the TF-IDF baseline")
     train.set_defaults(handler=_train)
 
     predict = commands.add_parser("predict", help="evaluate one text and predicate")
@@ -136,7 +185,7 @@ def build_parser() -> argparse.ArgumentParser:
     download.add_argument("--abstain-margin", type=float, default=0.0)
     download.add_argument("--max-length", type=int, default=256)
     download.add_argument("--batch-size", type=int, default=32)
-    download.add_argument("--hypothesis-template", default="{predicate}")
+    download.add_argument("--hypothesis-template", default="It is true that {predicate}.")
     download.set_defaults(handler=_download_nli)
 
     calibrate = commands.add_parser("calibrate", help="fit score calibration on a held-out labeled JSONL set")

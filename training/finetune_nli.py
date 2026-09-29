@@ -1,7 +1,9 @@
 """Fine-tune the pinned NLI encoder on SemPred-labeled JSONL data.
 
-Validation families are held out as complete groups so identical predicates
-do not leak across the train/validation split. Final stress data is never read.
+Validation holds out compositional constructions when they can be recognized,
+so common wrappers do not leak across the train/validation split. If the data
+has no construction diversity, it falls back to complete predicate families.
+Final stress data is never read.
 """
 from __future__ import annotations
 
@@ -18,6 +20,44 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from sempred.nli import NLISemPred
 
 
+def construction_group(text: str) -> str:
+    """Group examples by their outer composition instead of their topic words."""
+    normalized = text.strip().lower()
+    if "only hypothetical" in normalized or "does not imply the target action" in normalized:
+        return "hypothetical"
+    if normalized.startswith(
+        ("someone else said this:", "the customer explicitly says the opposite:")
+    ):
+        return "speaker_attribution"
+    if normalized.startswith("earlier,"):
+        return "historical"
+    if normalized.startswith("question from customer:"):
+        return "question"
+    if normalized.startswith("the customer says:"):
+        return "reported_speech"
+    if normalized.startswith(
+        (
+            "in the support ticket, ",
+            "the latest message says: ",
+            "according to the event, ",
+            "the customer wrote: ",
+            "the record indicates: ",
+            "from the submitted request: ",
+        )
+    ):
+        return "mixed_evidence"
+    if normalized.startswith(
+        (
+            "there is no evidence that ",
+            "it does not mean that ",
+            "the note does not say that ",
+            "do not conclude that ",
+        )
+    ):
+        return "negation"
+    return "plain"
+
+
 def load_jsonl(paths: list[Path]) -> tuple[list[dict], dict[str, str]]:
     rows: list[dict] = []
     hashes = {}
@@ -28,14 +68,47 @@ def load_jsonl(paths: list[Path]) -> tuple[list[dict], dict[str, str]]:
             if not line.strip():
                 continue
             row = json.loads(line)
-            if not isinstance(row, dict) or not {"text", "predicate", "label", "family"}.issubset(row):
-                raise ValueError(f"{path}:{line_no}: expected text, predicate, label, and family fields")
+            if not isinstance(row, dict) or not {"text", "predicate", "label"}.issubset(row):
+                raise ValueError(f"{path}:{line_no}: expected text, predicate, and label fields")
+            if not row.get("family"):
+                row["family"] = str(row["predicate"]).strip().lower()
+            if not row.get("construction"):
+                row["construction"] = construction_group(str(row["text"]))
             if row["label"] not in (0, 1, False, True):
                 raise ValueError(f"{path}:{line_no}: label must be binary")
             if not isinstance(row["text"], str) or not row["text"].strip() or not isinstance(row["predicate"], str) or not row["predicate"].strip():
                 raise ValueError(f"{path}:{line_no}: text and predicate must be non-empty strings")
             rows.append(row)
     return rows, hashes
+
+
+def split_rows(
+    rows: list[dict], *, strategy: str, group_count: int, seed: int
+) -> tuple[list[dict], list[dict], str, list[str]]:
+    """Hold out complete composition groups, falling back to predicate families."""
+    if group_count < 1:
+        raise ValueError("validation-group-count must be positive")
+    constructions = sorted({row["construction"] for row in rows})
+    split_field = strategy
+    if strategy == "auto":
+        split_field = "construction" if len(constructions) > group_count else "family"
+    groups = sorted({row[split_field] for row in rows})
+    if len(groups) <= group_count:
+        raise ValueError(
+            f"validation split by {split_field!r} needs more groups than "
+            "--validation-group-count"
+        )
+
+    shuffled_groups = groups.copy()
+    random.Random(seed).shuffle(shuffled_groups)
+    held_out = set(shuffled_groups[:group_count])
+    train_rows = [row for row in rows if row[split_field] not in held_out]
+    validation_rows = [row for row in rows if row[split_field] in held_out]
+    if len({int(row["label"]) for row in validation_rows}) != 2:
+        raise ValueError("held-out validation groups must contain both binary classes")
+    if len({int(row["label"]) for row in train_rows}) != 2:
+        raise ValueError("training groups must contain both binary classes")
+    return train_rows, validation_rows, split_field, sorted(held_out)
 
 
 def main() -> int:
@@ -50,7 +123,8 @@ def main() -> int:
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=2e-5)
     parser.add_argument("--max-length", type=int, default=256)
-    parser.add_argument("--validation-family-count", type=int, default=4)
+    parser.add_argument("--validation-split", choices=("auto", "construction", "family"), default="auto")
+    parser.add_argument("--validation-group-count", type=int, default=2)
     parser.add_argument(
         "--negative-nli-label",
         choices=("neutral", "contradiction"),
@@ -74,21 +148,15 @@ def main() -> int:
         args.train_data = [Path("data/sempred_32k_adversarial.jsonl")]
 
     rows, dataset_hashes = load_jsonl(args.train_data)
-    families = sorted({row["family"] for row in rows})
-    if len(families) <= args.validation_family_count:
-        raise ValueError("need more predicate families than validation-family-count")
     if len({int(row["label"]) for row in rows}) != 2:
         raise ValueError("training data must contain both binary classes")
 
-    rng = random.Random(args.seed)
-    shuffled_families = families.copy()
-    rng.shuffle(shuffled_families)
-    validation_families = set(shuffled_families[: args.validation_family_count])
-    train_rows = [row for row in rows if row["family"] not in validation_families]
-    validation_rows = [row for row in rows if row["family"] in validation_families]
-    if len({int(row["label"]) for row in validation_rows}) != 2:
-        raise ValueError("held-out validation families must contain both binary classes")
-
+    train_rows, validation_rows, split_field, validation_groups = split_rows(
+        rows,
+        strategy=args.validation_split,
+        group_count=args.validation_group_count,
+        seed=args.seed,
+    )
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -232,7 +300,9 @@ def main() -> int:
         "training_data_sha256": dataset_hashes,
         "training_examples": len(train_rows),
         "validation_examples": len(validation_rows),
-        "validation_families": sorted(validation_families),
+        "validation_split_field": split_field,
+        "validation_groups": sorted(validation_groups),
+        "validation_families": sorted({row["family"] for row in validation_rows}),
         "seed": args.seed,
         "epochs_requested": args.epochs,
         "best_epoch": best_epoch,

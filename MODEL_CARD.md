@@ -7,7 +7,18 @@ published stress score is below SemPred's release target, and the stress set
 has already been inspected during development. Do not use the reported score
 as a blind release result.
 
-## Base checkpoint
+## Default base checkpoint
+
+- Model: [`MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli`](https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli)
+- Revision: `6f5cf0a2b59cabb106aca4c287eed12e357e90eb`
+- License reported by the model repository: MIT
+- NLI sources listed by the repository: MultiNLI, FEVER, and ANLI
+- Size: approximately 184 million parameters
+- Default predicate wording: `It is true that {predicate}.`
+- Positive score: softmax probability assigned to the NLI `entailment` class
+- The checkpoint downloads separately and stays outside the source repository.
+
+## Earlier compact checkpoint
 
 - Model: [`cross-encoder/nli-MiniLM2-L6-H768`](https://huggingface.co/cross-encoder/nli-MiniLM2-L6-H768)
 - Revision: `c847a3c0e1cad93a5343183ef183f3044e3fc7c2`
@@ -21,15 +32,6 @@ The SemPred wrapper uses an immutable model revision, checks the checkpoint's
 label names, applies bounded batching, and stores models in safe-tensor format.
 The model files are downloaded separately and are not included in this source
 repository.
-
-### Larger NLI experiment
-
-- Model: [`MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli`](https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli)
-- Revision: `6f5cf0a2b59cabb106aca4c287eed12e357e90eb`
-- License reported by the model repository: MIT
-- Training sources listed by the repository: MultiNLI, FEVER, and ANLI
-- Size: approximately 184 million parameters
-- Checkpoint is local under `models/` and ignored by Git.
 
 ## Exploratory results
 
@@ -84,6 +86,10 @@ to 62.13% on stress and was much slower on CPU. The fine-tune completed with
 99.15% accuracy on its four-family validation split and 85.16% on stress, but
 only 49.37% on hard cases. Its near-perfect validation is not independent
 evidence because the examples come from the same generated source corpus.
+The construction-held-out validator has not yet been used to train a
+replacement checkpoint. A separate audit flags 9,983 of 32,000 rows for
+manual review as potential label conflicts; those flags are not confirmed
+mislabels.
 Threshold sweeps on the zero-shot checkpoint reached only 78.99% on hard and
 71.31% on stress. No candidate meets the 85% accuracy requirement across all
 benchmark suites, so none is approved for production.

@@ -45,13 +45,19 @@ SQL / Python / DataFrame
 
 ## Current implementation
 
-The checked-in baseline is a TF-IDF + logistic-regression cross-input classifier. It deliberately exposes a stable API so the model backend can be replaced without rewriting integrations.
+The preferred runtime is a local pretrained NLI cross-encoder, exposed through
+`NLISemPred`. The command line fine-tunes this encoder by default. `SemPred`
+still exposes the earlier TF-IDF + logistic-regression model as an explicit
+fast lexical baseline so existing integrations and comparisons remain usable.
 
-The baseline is a research control, not the final semantic model.
+Neither model has met the current 85% accuracy gate on all hard and stress
+benchmarks. The neural backend is the current candidate, not a promoted model.
 
 ## Intended production model
 
-The next model is a compact pretrained NLI/semantic cross-encoder, fine-tuned on predicate examples and hard negatives. The current environment did not have a pretrained checkpoint or network access, so no unverified model is included.
+The candidate is a pretrained NLI/semantic cross-encoder fine-tuned on
+predicate examples and hard negatives. Model weights are downloaded separately
+and pinned to a repository revision; they are not checked into source control.
 
 ## Runtime contract
 

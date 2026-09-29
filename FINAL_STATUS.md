@@ -1,7 +1,8 @@
 # SemPred iterative build status
 
-## Champion
-V4 hybrid TF-IDF semantic predicate classifier.
+## Historical lexical baseline
+V4 hybrid TF-IDF classifier; retained as an internal benchmark baseline, not
+the preferred product backend.
 
 - Base dataset: 24,000 examples
 - Predicates: 20
@@ -50,10 +51,23 @@ current gate is >=85% accuracy on every benchmark. No model meets it, and none
 is promoted. The source benchmarks have been used during model development,
 so a future candidate also needs a newly authored locked evaluation set.
 
+The primary `sempred train` workflow now fine-tunes the pinned DeBERTa NLI
+cross-encoder. TF-IDF is available only when selected with
+`--backend tfidf`. Validation now holds out recognized composition patterns
+before falling back to predicate families, to reduce wrapper-template leakage.
+This architecture switch is complete; the 85% quality gate is still open.
+
 An exploratory two-checkpoint blend reached 87.49% stress and 78.99% hard
 when each benchmark selected its own settings. The best shared blend and
 threshold scored 76.16% on the weaker suite, and no shared setting reached
 85% on both. Full per-setting results are in `benchmarks/results/`.
+
+The product training path now defaults to the transformer cross-encoder; the
+TF-IDF/logistic-regression model is an explicit baseline. Validation holds out
+composition groups when available. On the 32k training corpus, the selected
+split holds out `negation` and `plain` (8,134 rows) across all 20 families.
+No checkpoint has yet been trained or scored using this stricter split, so the
+85% requirement remains open. The corpus audit flags 9,983 rows for review.
 
 ## Iterations
 V0.1: baseline API + synthetic data

@@ -4,37 +4,58 @@ Evaluate a natural language predicate against text locally, from Python or DuckD
 SemPred returns a probability and a three-way decision (`true`, `false`, or
 `unknown`) so a caller can choose how to handle uncertain cases.
 
-> **Model status: research baseline.** The shipped TF-IDF model is not a
-> general-purpose semantic reasoner. It scored 82.87% accuracy on the project's
-> compositional stress benchmark, below the documented release threshold.
-> Treat output as a ranking signal and validate it on your own labeled data
-> before using it for consequential decisions.
+> **Model status: developer preview.** SemPred's preferred backend is a local
+> transformer cross-encoder. The TF-IDF implementation remains available as a
+> fast lexical baseline. No current checkpoint reaches 85% accuracy on both
+> the project's hard and compositional stress suites, so the model is not yet
+> approved for production decisions.
 
 ## Install
 
 ```bash
-python -m pip install "sempred[duckdb]"
+python -m pip install "sempred[nli,duckdb]"
 ```
 
 For local development, clone the repository and run
-`python -m pip install -e ".[duckdb]"`. Python 3.10 or newer is required.
+`python -m pip install -e ".[nli,duckdb]"`. Python 3.10 or newer is required.
 
 ## Train and predict
 
-Create a UTF-8 JSONL file with one labeled example per line:
+Create a UTF-8 JSONL file with one labeled example per line. Keep a stable
+`family` for each behavior and, where possible, a `construction` label for the
+outer writing pattern. Validation holds out construction groups first, then
+falls back to family groups when the data has little construction diversity:
 
 ```json
-{"text":"The order arrived late and I want my money back.","predicate":"customer is requesting a refund","label":1}
-{"text":"The order arrived on time.","predicate":"customer is requesting a refund","label":0}
+{"text":"The customer says: I want my money back.","predicate":"customer is requesting a refund","label":1,"family":"refund","construction":"reported_speech"}
+{"text":"Earlier, the order arrived on time.","predicate":"customer is requesting a refund","label":0,"family":"refund","construction":"historical"}
 ```
 
-Include examples from both classes for every behavior you want the model to
-recognize. Then train and query a local model:
+Download the pinned transformer checkpoint, then fine-tune it on your data:
 
 ```bash
-sempred train --data labeled.jsonl --model models/refund.pkl --abstain-margin 0.1
-sempred predict --model models/refund.pkl --text "Please return my payment" --predicate "customer is requesting a refund"
+sempred download-nli --output models/sempred-nli
+sempred train --data labeled.jsonl --base-model models/sempred-nli --model models/sempred-finetuned --epochs 1 --max-length 128
+sempred predict --model models/sempred-finetuned --text "Please return my payment" --predicate "customer is requesting a refund"
 ```
+
+The sample rows only show the format. For the default split, provide at least
+three construction groups (or three family groups if no construction groups
+are available), with both labels represented in training and validation. If
+`construction` is omitted, the trainer recognizes common wrappers and falls
+back to `family`; if `family` is also omitted, it groups by exact predicate
+text. Use `--validation-group-count` to change how many groups are held out.
+This split reduces known template leakage, but it is not a substitute for a
+new, independently authored final benchmark. Run `sempred train --help` for
+options.
+
+Before fine-tuning generated adversarial data, inspect potential label conflicts:
+
+```bash
+python -m training.audit_labels --data labeled.jsonl --output artifacts/label-audit.json
+```
+
+The audit flags rows for review; it never changes labels automatically.
 
 The command prints a JSON object with `probability`, `label`, and `decision`.
 `unknown` means the score falls inside the configured abstention margin around
@@ -44,7 +65,7 @@ separate representative validation set before interpreting them as confidence.
 ## Pretrained NLI model
 
 For a real pretrained semantic encoder, install the optional runtime and save
-the pinned Apache-2.0 model locally:
+the pinned MIT-licensed model locally:
 
 ```bash
 python -m pip install "sempred[nli]"
@@ -55,7 +76,7 @@ sempred calibrate --model models/sempred-nli --output models/sempred-nli-calibra
 
 The first command downloads the checkpoint from Hugging Face; inference after
 that uses the saved local model. The current default is
-[`cross-encoder/nli-MiniLM2-L6-H768`](https://huggingface.co/cross-encoder/nli-MiniLM2-L6-H768),
+[`MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli`](https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli),
 pinned to a fixed revision so reruns use the same weights. This pretrained
 checkpoint is an evaluation candidate, not a promoted SemPred model. Its
 entailment score must pass the release benchmarks before production use.
@@ -65,13 +86,13 @@ reflect the workload where scores will be used.
 To fine-tune on your labeled corpus, from a source checkout run:
 
 ```bash
-python -m training.finetune_nli --train-data labeled.jsonl --base-model models/sempred-nli --output models/sempred-finetuned --epochs 2
+sempred train --backend nli --data labeled.jsonl --base-model models/sempred-nli --model models/sempred-finetuned --epochs 1
 ```
 
-This groups the validation split by `family` to prevent the same predicate
-family from appearing in both train and validation data. Supply `family` on
-every training row; do not use the final evaluation dataset for fine-tuning or
-calibration.
+Validation holds out construction groups when available and falls back to
+complete family groups when it cannot identify enough distinct constructions.
+This reduces template leakage but does not prove generalization to unseen
+domains. Do not use the final evaluation dataset for fine-tuning or calibration.
 
 ## Python API
 
@@ -85,8 +106,9 @@ print(result.probability, result.decision)
 batch = model.predict_batch(texts, "customer wants to cancel a subscription")
 ```
 
-`SemPred.fit(...)` remains available for the lightweight TF-IDF baseline. Both
-backends bound their in-memory prediction cache (10,000 pairs by default); set
+`SemPred.fit(...)` remains available for the lightweight TF-IDF baseline; use
+`sempred train --backend tfidf` to select it explicitly. Both backends bound
+their in-memory prediction cache (10,000 pairs by default); set
 `cache_size=0` when constructing a model to disable it for high-cardinality
 streaming workloads.
 
@@ -94,10 +116,10 @@ streaming workloads.
 
 ```python
 import duckdb
-from sempred import SemPred
+from sempred import NLISemPred
 from sempred.duckdb import register
 
-model = SemPred.load("models/refund.pkl")
+model = NLISemPred.load("models/sempred-finetuned")
 con = register(duckdb.connect(), model)
 rows = con.execute("""
     SELECT ticket_text, SEM_SCORE(ticket_text, 'customer is requesting a refund') AS score
