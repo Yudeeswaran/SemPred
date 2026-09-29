@@ -20,6 +20,19 @@ debugging evidence, not an independent estimate of production quality.
 | DeBERTa fine-tune v1 | 2,680 hard cases | 49.37% | Clear domain/composition transfer failure |
 | DeBERTa zero-shot | 2,680 hard cases | 78.25% | Useful reference point; below target |
 | DeBERTa zero-shot | 12k stress | 62.13% | Useful reference point; below target |
+| Frozen MiniLM NLI embeddings + logistic regression | same 12k stress | 64.48% | Fixed threshold; trained on 32k synthetic rows; exploratory only |
+
+The embedding baseline used the locally cached NLI MiniLM checkpoint as a
+frozen sentence encoder, with independent mean-pooled text and predicate
+vectors. It is not the separate sentence-transformers checkpoint described in
+the baseline runner's default configuration. Its result is close to the
+zero-shot DeBERTa figure on this exposed synthetic stress set and does not
+establish that dense embeddings solve the transfer problem. Full provenance,
+metrics, and hashes are in
+[`../benchmark/results/embeddings_logreg_stress_exploratory.json`](../benchmark/results/embeddings_logreg_stress_exploratory.json).
+An external LLM score is not recorded: no provider credential or local general
+LLM was available in this workspace, and the pinned sentence-transformer
+download was blocked by the workspace network policy.
 
 Threshold and ensemble sweeps selected different settings for different
 development suites. Their best per-suite scores are therefore not a valid
@@ -50,3 +63,7 @@ the Apache-2.0 `sentence-transformers/all-MiniLM-L6-v2` checkpoint, pinned to
 revision `8b3219a92973c328a8e22fadcfa821b5dc75636a`. Its official model card
 describes it as a sentence encoder and provides the mean-pooling procedure
 used by the baseline. [Model card](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2).
+
+The next evaluation should be workload-specific. See the
+[annotation guide](ANNOTATION_GUIDE.md) for a concrete sampling, labeling, and
+locking protocol. No new 500-example gold set has been created yet.

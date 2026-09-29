@@ -1,0 +1,35 @@
+{
+  "baseline": "frozen_encoder_embeddings_plus_logistic_regression",
+  "encoder": "models/sempred-nli",
+  "encoder_revision": null,
+  "encoder_source": {
+    "backend": "nli-cross-encoder",
+    "model_id": "cross-encoder/nli-MiniLM2-L6-H768",
+    "revision": "c847a3c0e1cad93a5343183ef183f3044e3fc7c2",
+    "threshold": 0.5,
+    "abstain_margin": 0.0,
+    "cache_size": 10000,
+    "max_length": 256,
+    "batch_size": 32
+  },
+  "feature_layout": "text,predicate,abs_difference,elementwise_product",
+  "classifier": "sklearn.LogisticRegression(C=1.0,max_iter=1000,random_state=42)",
+  "train_examples": 32000,
+  "train_data_sha256": {
+    ".cache\\research-data\\sempred_32k_adversarial.jsonl": "4da11e309be800626d6eef1a0b268f2a9b4676545efd9265d0323ab23bf0d2f0"
+  },
+  "evaluation_examples": 12000,
+  "evaluation_sha256": "77b8e958a35940ede52b6997086d0545640a07d79f13d10fd7e9678b124ffa13",
+  "threshold": 0.5,
+  "fit_and_encoding_seconds": 125.53080229996704,
+  "metrics": {
+    "accuracy": 0.64475,
+    "precision": 0.6311935182299782,
+    "recall": 0.6811837901462923,
+    "f1": 0.6552365547917509,
+    "roc_auc": 0.7143034994036063,
+    "average_precision": 0.7211026903558845,
+    "brier": 0.21610677242279053,
+    "ece": 0.03629896714600424
+  }
+}

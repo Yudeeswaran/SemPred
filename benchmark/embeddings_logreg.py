@@ -1,4 +1,4 @@
-"""Compare a frozen sentence encoder plus logistic regression with NLI models."""
+"""Compare frozen sentence embeddings plus logistic regression with NLI models."""
 from __future__ import annotations
 
 import argparse
@@ -28,15 +28,26 @@ def read_jsonl(path: Path) -> list[dict]:
     return rows
 
 
-def encode_texts(texts: list[str], *, model_id: str, revision: str, batch_size: int) -> np.ndarray:
+def encode_texts(
+    texts: list[str], *, model_id: str, revision: str | None, batch_size: int
+) -> np.ndarray:
     try:
         import torch
         from transformers import AutoModel, AutoTokenizer
     except ImportError as exc:
         raise RuntimeError("Install the optional NLI dependencies: pip install 'sempred[nli]'") from exc
 
-    tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
-    model = AutoModel.from_pretrained(model_id, revision=revision, use_safetensors=True)
+    model_path = Path(model_id)
+    local_model = model_path.is_dir()
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_id, revision=None if local_model else revision, local_files_only=local_model
+    )
+    model = AutoModel.from_pretrained(
+        model_id,
+        revision=None if local_model else revision,
+        local_files_only=local_model,
+        use_safetensors=True,
+    )
     model.eval()
     vectors = []
     for offset in range(0, len(texts), batch_size):
@@ -63,6 +74,8 @@ def main() -> int:
     parser.add_argument("--dataset", type=Path, required=True, help="locked evaluation JSONL")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--batch-size", type=int, default=64)
+    parser.add_argument("--encoder", default=MODEL_ID, help="Hub model ID or local model directory")
+    parser.add_argument("--revision", default=MODEL_REVISION, help="pinned Hub revision; ignored for a local directory")
     args = parser.parse_args()
     if args.batch_size < 1:
         parser.error("--batch-size must be positive")
@@ -73,8 +86,14 @@ def main() -> int:
     unique_texts = list(dict.fromkeys(row["text"] for row in rows))
     unique_predicates = list(dict.fromkeys(row["predicate"] for row in rows))
     started = time.perf_counter()
-    all_vectors = encode_texts(unique_texts + unique_predicates, model_id=MODEL_ID,
-                               revision=MODEL_REVISION, batch_size=args.batch_size)
+    local_encoder = Path(args.encoder).is_dir()
+    encoder_revision = None if local_encoder else args.revision
+    all_vectors = encode_texts(
+        unique_texts + unique_predicates,
+        model_id=args.encoder,
+        revision=encoder_revision,
+        batch_size=args.batch_size,
+    )
     elapsed = time.perf_counter() - started
     text_vector = dict(zip(unique_texts, all_vectors[: len(unique_texts)]))
     predicate_vector = dict(zip(unique_predicates, all_vectors[len(unique_texts) :]))
@@ -89,15 +108,25 @@ def main() -> int:
     classifier.fit(features(train), [int(row["label"]) for row in train])
     probabilities = classifier.predict_proba(features(evaluation))[:, 1]
     labels = [int(row["label"]) for row in evaluation]
+    encoder_source = None
+    if local_encoder:
+        metadata_path = Path(args.encoder) / "sempred-nli.json"
+        if metadata_path.is_file():
+            encoder_source = json.loads(metadata_path.read_text(encoding="utf-8"))
     result = {
-        "baseline": "frozen_sentence_embeddings_plus_logistic_regression",
-        "encoder": MODEL_ID,
-        "encoder_revision": MODEL_REVISION,
+        "baseline": "frozen_encoder_embeddings_plus_logistic_regression",
+        "encoder": args.encoder,
+        "encoder_revision": encoder_revision,
+        "encoder_source": encoder_source,
         "feature_layout": "text,predicate,abs_difference,elementwise_product",
         "classifier": "sklearn.LogisticRegression(C=1.0,max_iter=1000,random_state=42)",
         "train_examples": len(train),
+        "train_data_sha256": {
+            str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in args.train_data
+        },
         "evaluation_examples": len(evaluation),
         "evaluation_sha256": hashlib.sha256(args.dataset.read_bytes()).hexdigest(),
+        "threshold": 0.5,
         "fit_and_encoding_seconds": elapsed,
         "metrics": evaluate(labels, probabilities),
     }
