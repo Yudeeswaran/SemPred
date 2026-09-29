@@ -19,7 +19,8 @@ from sklearn.metrics import (
  roc_auc_score,
 )
 from sklearn.svm import LinearSVC
-from v4_robust import F, contexts, negators
+
+from training.classical_baseline import F, contexts, negators
 
 ROOT=Path(__file__).resolve().parents[1]; ART=ROOT/'artifacts'; DATA=ROOT/'data'; ART.mkdir(exist_ok=True)
 R=random.Random(99); np.random.seed(99)

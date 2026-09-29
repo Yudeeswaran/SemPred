@@ -5,6 +5,8 @@ __pycache__/
 *.pyc
 artifacts/
 models/
+data/*.jsonl
+FILE_MANIFEST.sha256
 *.pkl
 *.egg-info/
 build/

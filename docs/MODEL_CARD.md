@@ -63,7 +63,7 @@ These numbers record model-selection work; they are not release evidence.
 
 Per-run JSON includes the dataset SHA-256, checkpoint revision, runtime
 versions, timing, quality metrics, and selective-coverage measurements under
-[`benchmarks/results`](benchmarks/results/). The v6 hard data was used for
+[`../benchmark/results`](../benchmark/results/). The v6 hard data was used for
 prompt selection and calibration, so its fitted metrics must not be presented
 as independent evaluation.
 

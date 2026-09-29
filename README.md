@@ -146,8 +146,10 @@ filter that might discard important records.
 SemPred is a usable developer preview, not yet a sellable semantic decision
 product. The locked stress and external-data gates, calibrated quality claims,
 optimized inference, and million-row DuckDB benchmark remain open. See
-[the full project guide](COMPLETE_PROJECT_GUIDE.md),
-[product definition and release gates](docs/PRODUCT.md), and
+[the product definition and release gates](docs/PRODUCT.md),
+[the model card](docs/MODEL_CARD.md),
+[the evaluation history](docs/EVALUATION.md),
+[architecture](docs/ARCHITECTURE.md), and
 [reproducibility rules](docs/REPRODUCIBILITY.md).
 
 ## License
