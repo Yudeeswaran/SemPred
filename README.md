@@ -1,10 +1,11 @@
 # SemPred
 
-Evaluate a natural language predicate against text locally, from Python or DuckDB.
-SemPred returns a probability and a three-way decision (`true`, `false`, or
-`unknown`) so a caller can choose how to handle uncertain cases.
+SemPred evaluates a natural-language condition against rows of text in Python
+or DuckDB. The first use case to validate is local support-ticket triage: score
+a condition such as “the customer is requesting a refund” and route uncertain
+rows for review.
 
-> **Model status: developer preview.** SemPred's preferred backend is a local
+> **Product status: research prototype.** SemPred's preferred backend is a local
 > transformer cross-encoder. The TF-IDF implementation remains available as a
 > fast lexical baseline. No current checkpoint reaches 85% accuracy on both
 > the project's hard and compositional stress suites, so the model is not yet
@@ -143,13 +144,14 @@ filter that might discard important records.
 
 ## Project status and documentation
 
-SemPred is a usable developer preview, not yet a sellable semantic decision
-product. The locked stress and external-data gates, calibrated quality claims,
-optimized inference, and million-row DuckDB benchmark remain open. See
-[the product definition and release gates](docs/PRODUCT.md),
-[the model card](docs/MODEL_CARD.md),
-[the evaluation history](docs/EVALUATION.md),
-[architecture](docs/ARCHITECTURE.md), and
+SemPred is not ready for sale. It has no customer pilot or independent
+support-ticket evaluation yet. See the
+[product definition](docs/PRODUCT.md), [launch plan](docs/LAUNCH_PLAN.md),
+[model card](docs/MODEL_CARD.md), [evaluation history](docs/EVALUATION.md),
+and [annotation guide](docs/ANNOTATION_GUIDE.md). The locked stress and
+external-data gates, calibrated quality claims, optimized inference, and
+million-row DuckDB benchmark remain open. See
+[architecture](docs/ARCHITECTURE.md) and
 [reproducibility rules](docs/REPRODUCIBILITY.md).
 
 ## License
