@@ -65,5 +65,26 @@ describes it as a sentence encoder and provides the mean-pooling procedure
 used by the baseline. [Model card](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2).
 
 The next evaluation should be workload-specific. See the
-[annotation guide](ANNOTATION_GUIDE.md) for a concrete sampling, labeling, and
-locking protocol. No new 500-example gold set has been created yet.
+protocol below. No new 500-example gold set has been created yet.
+
+## Collect and lock the next set
+
+Choose one customer workflow and its exact predicates before collecting data.
+For the initial support-ticket use case, label whether the text supports the
+predicate for the relevant actor and time; keyword overlap alone is not enough.
+Mark ambiguous or conflicting rows for adjudication rather than forcing a
+binary label. Track scenario group, source type, and annotator for each row.
+
+Sample realistic paraphrases, negation, completed versus requested actions,
+past versus current state, hypotheticals, quotations, other speakers, multiple
+events, and missing evidence. Avoid multiplying a small number of sentences
+through repeated wrappers. Group paraphrases and related scenarios before
+splitting so near-duplicates cannot cross partitions. Keep the final set out
+of training, calibration, and model selection.
+
+Save the exact JSONL, labeling instructions, source description, split
+manifest, and SHA-256. Record annotator agreement and unresolved rows. Score
+each frozen candidate once at a predeclared threshold; report per-predicate
+quality, calibration, coverage, uncertainty intervals, and error examples. Any
+change after inspecting final-set results requires a fresh test set. Assistant-
+generated examples can test software but are not independent human evidence.

@@ -145,14 +145,16 @@ filter that might discard important records.
 ## Project status and documentation
 
 SemPred is not ready for sale. It has no customer pilot or independent
-support-ticket evaluation yet. See the
-[product definition](docs/PRODUCT.md), [launch plan](docs/LAUNCH_PLAN.md),
-[model card](docs/MODEL_CARD.md), [evaluation history](docs/EVALUATION.md),
-and [annotation guide](docs/ANNOTATION_GUIDE.md). The locked stress and
-external-data gates, calibrated quality claims, optimized inference, and
-million-row DuckDB benchmark remain open. See
-[architecture](docs/ARCHITECTURE.md) and
-[reproducibility rules](docs/REPRODUCIBILITY.md).
+support-ticket evaluation yet. Product scope, model details, evaluation history,
+architecture, and reproducibility notes are in the linked docs. Workload-level
+validation, calibrated quality claims, optimized inference, and the million-row
+DuckDB benchmark remain open.
+
+- [Product scope](docs/PRODUCT.md)
+- [Model card](docs/MODEL_CARD.md)
+- [Evaluation history](docs/EVALUATION.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Reproducibility](docs/REPRODUCIBILITY.md)
 
 ## License
 
