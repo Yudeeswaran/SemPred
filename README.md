@@ -1,14 +1,13 @@
 # SemPred
 
-SemPred evaluates natural-language predicates against support-ticket text in
-Python or DuckDB. It returns a score and a tri-state decision: `true`, `false`,
-or `unknown` when the score is too close to the threshold. `unknown` maps to
-SQL `NULL` in DuckDB so uncertain rows can be routed for review.
+> **Benchmark:** Matched TF-IDF and frozen-embedding evaluations on Banking77.
+> **Prototype:** Predicate scoring works in Python and DuckDB; uncertain decisions map to SQL `NULL`.
+> **Status:** Research report, not a product; tested models miss the predeclared quality gates.
 
-**Status: research prototype, not ready for production use.** The current
-few-shot experiment is fast after embedding, but misses the accuracy of the
-full-data TF-IDF baseline on Banking77. No backend is promoted as a dependable
-customer-facing classifier.
+SemPred evaluates natural-language predicates against support-ticket text. It
+returns a score and a tri-state decision: `true`, `false`, or `unknown` when the
+score is too close to the threshold. `unknown` maps to SQL `NULL` in DuckDB so
+uncertain rows can be routed for review.
 
 ## Current experiment
 
