@@ -1,21 +1,24 @@
 # SemPred
 
-> **Benchmark:** Matched TF-IDF and frozen-embedding evaluations on Banking77.
-> **Prototype:** Predicate scoring works in Python and DuckDB; uncertain decisions map to SQL `NULL`.
-> **Status:** Research report, not a product; tested models miss the predeclared quality gates.
+> **Project:** Research into a semantic predicate execution layer for data systems, with a working Python and DuckDB prototype.
+> **Banking77 result:** Best 16-shot accuracy was 74.93% against an 80% bar; the best gap cutoff reached 94.1% accuracy at 44.7% ticket coverage, short of the 90%/50% gate.
+> **Conclusion:** Negative product result. No evaluated model passed the predeclared quality gates; this prototype is not production-ready.
 
-SemPred evaluates natural-language predicates against support-ticket text. It
-returns a score and a tri-state decision: `true`, `false`, or `unknown` when the
-score is too close to the threshold. `unknown` maps to SQL `NULL` in DuckDB so
-uncertain rows can be routed for review.
+SemPred explores how data systems could execute natural-language predicates
+against rows. The prototype returns a score and a tri-state decision: `true`,
+`false`, or `unknown` when the score is too close to the threshold. `unknown`
+maps to SQL `NULL` in DuckDB so uncertain rows can be routed for review.
 
-## Current experiment
+## Predicate execution prototype
 
-The active hypothesis is a frozen `all-MiniLM-L6-v2` sentence encoder plus a
-small balanced logistic-regression head for each predicate. For each input
-text, the encoder is called once; candidate predicate heads operate on the
-cached vector. The encoder weights are pinned to an immutable revision and
-head archives use JSON and NumPy data, not pickle.
+The few-shot backend uses a frozen `all-MiniLM-L6-v2` sentence encoder and a
+small balanced logistic-regression head for each predicate. It embeds an input
+once, then scores candidate predicates from the cached vector. The encoder is
+pinned to an immutable revision. Head archives use JSON and NumPy data loaded
+with pickle disabled. These are prototype mechanics; benchmark results below
+do not establish production quality.
+
+## Banking77 benchmark report
 
 The experiment uses the official [PolyAI Banking77](https://huggingface.co/datasets/PolyAI/banking77/tree/796a4623935746f71378f0ebd435635a8ce08e50)
 train and test splits. Each predicate receives a balanced support set sampled
@@ -80,7 +83,7 @@ and the batch/thread/ONNX measurements in
 [`benchmark/results/banking77-encoder-tuning.json`](benchmark/results/banking77-encoder-tuning.json)
 and [`benchmark/results/banking77-encoder-thread-sweep.json`](benchmark/results/banking77-encoder-thread-sweep.json).
 
-### Completed base-encoder follow-up
+### Base-size encoder result: negative
 
 The base encoder improved mean top-1 accuracy by 14.68 points over the matched
 16-shot TF-IDF runs, but reached only 74.93% (±1.77 pp), below the 80% gate.
