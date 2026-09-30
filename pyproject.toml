@@ -31,7 +31,7 @@ ml = [
   "datasets>=2.20",
 ]
 duckdb = ["duckdb>=1.0", "pyarrow>=14"]
-dev = ["pytest>=8", "ruff>=0.6", "duckdb>=1.0", "pyarrow>=14"]
+dev = ["pytest>=8", "ruff>=0.6", "duckdb>=1.0", "pyarrow>=14", "PyYAML>=6"]
 
 [tool.setuptools.packages.find]
 include = ["sempred*", "training*"]

@@ -135,20 +135,111 @@ DuckDB chunk through the batch API. Without PyArrow it falls back to scalar
 Python UDFs. The vectorized path still needs an end-to-end million-row
 benchmark before its throughput can be claimed.
 
+## Independent benchmark
+
+The benchmark uses the official [PolyAI Banking77](https://huggingface.co/datasets/PolyAI/banking77/tree/796a4623935746f71378f0ebd435635a8ce08e50)
+test split (3,080 examples, 77 intents), pinned to an immutable dataset
+revision. Candidate predicates come directly from the released intent names;
+only underscores are replaced with spaces. No SemPred task templates are
+written for this evaluation. The TF-IDF classifier is trained on the separate
+official 10,003-example training split. The dataset is CC BY 4.0; see its card
+for the required PolyAI attribution. Cite Casanueva et al. (2020),
+[“Efficient Intent Detection with Dual Sentence Encoders”](https://arxiv.org/abs/2003.04807).
+
+| Baseline | Training / prompt setup | Accuracy | Inference rows/sec | Evaluation |
+| --- | --- | ---: | ---: | --- |
+| TF-IDF + logistic regression | Banking77 train split, one-vs-rest | 98.73% | 46,417 | Full test split; predicate `card swallowed` |
+| Zero-shot MiniLM NLI | `cross-encoder/nli-MiniLM2-L6-H768` | 97.89% | 34.5 | Same binary predicate task |
+| Fine-tuned MiniLM NLI | Synthetic SemPred corpus; no Banking77 training | 85.88% | 25.0 | Same binary predicate task |
+| Zero-shot MiniLM NLI, dynamic int8 | Same zero-shot checkpoint, CPU int8 | 98.73% | 54.0 | Same task; quality regressed |
+| [FLAN-T5-small](https://huggingface.co/google/flan-t5-small) | Pinned zero-shot yes/no prompt | 98.70% | 27.7 | Same binary task; predicted no for every row |
+
+All measured rows use the full 3,080-example test split and a single candidate
+predicate, `card swallowed`, taken from the official category list. There are
+40 positive examples and 3,040 negatives. Raw accuracy is therefore misleading;
+balanced accuracy and F1 are more informative:
+
+| Baseline | Balanced accuracy | Precision | Recall | F1 |
+| --- | ---: | ---: | ---: | ---: |
+| TF-IDF + logistic regression | 51.25% | 1.00 | 0.025 | 0.049 |
+| Zero-shot MiniLM NLI | 70.56% | 0.288 | 0.425 | 0.343 |
+| Fine-tuned MiniLM NLI | 75.58% | 0.058 | 0.650 | 0.107 |
+| Zero-shot MiniLM NLI, dynamic int8 | 51.25% | 1.00 | 0.025 | 0.049 |
+| FLAN-T5-small | 50.00% | 0.000 | 0.000 | 0.000 |
+
+The NLI checkpoints were run on CPU with 8 PyTorch threads and batch size 128.
+FLAN-T5-small used batch size 64 and the same 8-thread CPU.
+Rates include tokenization and forward inference, exclude model loading, and
+were measured on a Windows 11 laptop with an Intel `Family 6 Model 154` CPU,
+Python 3.13.5, and PyTorch 2.14.0+cpu. TF-IDF inference excludes fit; the
+one-vs-rest fit took 0.4 seconds. These are single-machine measurements, not
+general performance guarantees. Dynamic int8 increased speed by about 56% but
+reduced F1 from 0.343 to 0.049 at the unchanged 0.5 threshold. This row uses
+PyTorch's deprecated dynamic-quantization API as an experiment; choose and
+revalidate a maintained quantization runtime before shipping int8 inference.
+
+A separate 77-way intent-classification baseline reaches 85.45% top-1 accuracy
+and 41,880 rows/sec on the full test split when trained on the official
+Banking77 training split. This is a conventional intent classifier; it should
+not be confused with the one-predicate results above or SemPred's binary API.
+
+The FLAN-T5 run used `google/flan-t5-small` at revision
+`0fc9ddf78a1e988dac52e2dac162b0ede4fd74ab` (Apache-2.0) and a fixed yes/no
+prompt. Its 98.70% raw accuracy hides that it answered “no” for every row; its
+balanced accuracy and F1 are both zero. The checkpoint weights are verified by
+SHA-256 in the runner. FLAN-T5 is an instruction-tuned encoder-decoder model,
+included here as a small generative baseline, not a hosted general-purpose
+assistant.
+
+To reproduce these runs, install the development extras and fetch the
+hash-checked dataset and model files:
+
+```bash
+python -m pip install -e ".[dev,nli]"
+python benchmark/fetch_banking77.py
+python -m benchmark.fetch_flan_t5
+python benchmark/banking77.py \
+  --dataset .cache/research-data/banking77_test.parquet \
+  --train-data .cache/research-data/banking77_train.parquet \
+  --backend tfidf \
+  --mode predicate --predicate "card swallowed" \
+  --output .cache/research-data/banking77-tfidf.json
+```
+
+Run the LLM baseline with:
+
+```bash
+python -m benchmark.banking77_llm \
+  --dataset .cache/research-data/banking77_test.parquet \
+  --model-dir .cache/research-data/flan-t5-small \
+  --output .cache/research-data/banking77-flan-t5-small.json
+```
+
+Replace `--backend tfidf` with `--backend nli --model models/sempred-nli` or
+`--model models/sempred-finetuned-v3-neutral` for the NLI rows; add
+`--dynamic-int8` to reproduce the quantized row. A 77-way NLI run is also
+available by omitting `--mode predicate`, but the full 77-candidate CPU run is
+costly. One predicate on one public dataset does not establish quality for
+another support workload or make automated decisions safe without customer
+data, calibration, and review.
+
 ## Model files and privacy
 
 Inference runs locally. Training data and text are not sent to a service by
-this package. Model files use Python pickle: **only load model files you trust**.
-Keep training examples representative, and review errors before deploying any
-filter that might discard important records.
+this package. TF-IDF models are saved as a ZIP archive containing JSON
+configuration and NumPy arrays; NumPy loading disables pickle. Older pickle
+model files are intentionally rejected and must be retrained. Transformer
+checkpoints use Hugging Face safetensors. Keep training examples representative,
+and review errors before deploying any filter that might discard important
+records.
 
 ## Project status and documentation
 
-SemPred is not ready for sale. It has no customer pilot or independent
-support-ticket evaluation yet. Product scope, model details, evaluation history,
-architecture, and reproducibility notes are in the linked docs. Workload-level
-validation, calibrated quality claims, optimized inference, and the million-row
-DuckDB benchmark remain open.
+SemPred is not ready for sale. It has an independent public support-ticket
+benchmark, but no customer pilot or customer-specific evaluation. Product
+scope, model details, evaluation history, architecture, and reproducibility
+notes are in the linked docs. Workload-level validation, calibrated quality
+claims, optimized inference, and the million-row DuckDB benchmark remain open.
 
 - [Product scope](docs/PRODUCT.md)
 - [Model card](docs/MODEL_CARD.md)

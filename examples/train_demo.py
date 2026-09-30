@@ -34,8 +34,8 @@ def main():
 
     out = Path("artifacts")
     out.mkdir(exist_ok=True)
-    model.save(out / "sempred-v0.1.pkl")
-    print(f"\nSaved: {out / 'sempred-v0.1.pkl'}")
+    model.save(out / "sempred-v0.1.zip")
+    print(f"\nSaved: {out / 'sempred-v0.1.zip'}")
 
 
 if __name__ == "__main__":

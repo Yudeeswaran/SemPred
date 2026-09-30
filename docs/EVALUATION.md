@@ -11,6 +11,26 @@ debugging evidence, not an independent estimate of production quality.
 
 ## Findings so far
 
+### Independent public dataset
+
+The official PolyAI Banking77 test split is pinned and evaluated separately
+from the synthetic SemPred suites. On a single-predicate task using the
+released `card swallowed` category, zero-shot MiniLM reached 0.34 F1 at 34.5
+rows/sec; the synthetic-corpus fine-tune reached 0.11 F1 at 25.0 rows/sec.
+Dynamic int8 increased speed to 54.0 rows/sec but reduced F1 to 0.05 at the
+unchanged threshold. FLAN-T5-small answered no for every example: 27.7
+rows/sec, with 0.00 F1. The predicate has only 40 positive test examples among
+3,080, so raw accuracy is not a useful quality summary. A Banking77-trained
+TF-IDF one-vs-rest model scored 0.05 F1 at 46,417 rows/sec. The conventional
+77-class TF-IDF classifier reached 85.45% top-1 accuracy. Full metrics,
+commands, hardware details, and dataset revision are in the
+[README](../README.md#independent-benchmark).
+
+These measurements are one-predicate and one-dataset evidence, not a claim of
+general support-ticket quality. The generative baseline is pinned FLAN-T5-small,
+not a hosted frontier LLM. Customer-specific evaluation, calibration, and a
+multi-predicate benchmark remain necessary before production claims.
+
 | Candidate | Evaluation | Accuracy | Interpretation |
 | --- | --- | ---: | --- |
 | TF-IDF/logistic regression | 12k compositional stress | 82.87% | Retained failure; below the 85% target |

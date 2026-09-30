@@ -16,8 +16,9 @@ records remain available for review.
 ## Not supported as a product claim
 
 SemPred is not validated as a general-purpose classifier, document search
-engine, or automated decision system. It has no independent support-ticket
-evaluation or customer pilot. Do not use it to make high-impact decisions.
+engine, or automated decision system. A public Banking77 benchmark is
+available, but there is no customer-specific evaluation or pilot. Do not use
+it to make high-impact decisions.
 
 ## Release requirements
 

@@ -92,7 +92,9 @@ manual review as potential label conflicts; those flags are not confirmed
 mislabels.
 Threshold sweeps on the zero-shot checkpoint reached only 78.99% on hard and
 71.31% on stress. No candidate meets the 85% accuracy requirement across all
-benchmark suites, so none is approved for production.
+synthetic development suites, so none is approved for production. Independent
+Banking77 results are recorded in [the evaluation record](EVALUATION.md); they
+cover a single support intent and do not replace customer-specific validation.
 
 A grid search blending the base and fine-tuned DeBERTa probabilities reached
 87.49% on stress and 78.99% on hard when each suite selected its own settings.

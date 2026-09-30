@@ -18,7 +18,7 @@ from sempred.nli import NLISemPred
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", type=Path, required=True, help="saved local SemPred NLI model directory")
-    parser.add_argument("--dataset", type=Path, default=Path("data/sempred_v7_stress_12k.jsonl"))
+    parser.add_argument("--dataset", type=Path, required=True, help="local labeled JSONL source corpus")
     parser.add_argument("--rows", type=int, default=1_000_000)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")

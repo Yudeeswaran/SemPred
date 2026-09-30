@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
-import pickle
+import io
+import json
+import zipfile
 from collections import OrderedDict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -9,6 +11,7 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
+from scipy.special import expit
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
@@ -26,7 +29,7 @@ class SemPred:
 
     Use :class:`sempred.nli.NLISemPred` for the transformer cross-encoder
     backend. This class stays available for fast lexical baselines and existing
-    serialized models.
+    safe JSON/NumPy model archives.
     """
 
     def __init__(self, pipeline: Pipeline, threshold: float = 0.5, abstain_margin: float = 0.0, cache_size: int = 10_000):
@@ -41,6 +44,9 @@ class SemPred:
         self.abstain_margin = float(abstain_margin)
         self.cache_size = int(cache_size)
         self._cache: OrderedDict[str, float] = OrderedDict()
+        self._safe_vectorizer: TfidfVectorizer | None = None
+        self._safe_coefficients: np.ndarray | None = None
+        self._safe_intercept: float | None = None
 
     @staticmethod
     def _pair(text: str, predicate: str) -> str:
@@ -91,7 +97,7 @@ class SemPred:
             self._cache.move_to_end(key)
             probability = self._cache[key]
         else:
-            probability = float(self.pipeline.predict_proba([self._pair(text, predicate)])[0, 1])
+            probability = float(self._predict_proba([self._pair(text, predicate)])[0])
             self._remember(key, probability)
         return self._prediction(probability)
 
@@ -115,7 +121,7 @@ class SemPred:
                 missing[key] = self._pair(text, predicate)
         if missing:
             pairs = list(missing.values())
-            scores = self.pipeline.predict_proba(pairs)[:, 1]
+            scores = self._predict_proba(pairs)
             for key, probability in zip(missing, scores):
                 probabilities[key] = float(probability)
                 self._remember(key, float(probability))
@@ -141,22 +147,105 @@ class SemPred:
         decision = "unknown" if abs(probability - self.threshold) < self.abstain_margin else ("true" if label else "false")
         return Prediction(probability=probability, label=label, decision=decision)
 
+    def _predict_proba(self, pairs: Sequence[str]) -> np.ndarray:
+        if self._safe_vectorizer is None:
+            return self.pipeline.predict_proba(pairs)[:, 1]
+        features = self._safe_vectorizer.transform(pairs)
+        logits = np.asarray(features @ self._safe_coefficients.T).reshape(-1) + self._safe_intercept
+        return expit(logits)
+
     def save(self, path: str | Path) -> None:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("wb") as f:
-            pickle.dump(self, f)
+        if self._safe_vectorizer is None:
+            vectorizer = self.pipeline.named_steps["tfidf"]
+            classifier = self.pipeline.named_steps["classifier"]
+            vocabulary = vectorizer.vocabulary_
+            idf = vectorizer.idf_
+            coefficients = classifier.coef_
+            intercept = classifier.intercept_
+        else:
+            vectorizer = self._safe_vectorizer
+            vocabulary = vectorizer.vocabulary_
+            idf = vectorizer.idf_
+            coefficients = self._safe_coefficients.reshape(1, -1)
+            intercept = np.asarray([self._safe_intercept])
+
+        vectorizer_params = vectorizer.get_params()
+        config = {
+            "format": "sempred-tfidf",
+            "format_version": 1,
+            "threshold": self.threshold,
+            "abstain_margin": self.abstain_margin,
+            "cache_size": self.cache_size,
+            "vocabulary": {str(token): int(index) for token, index in vocabulary.items()},
+            "vectorizer": {
+                "analyzer": vectorizer_params["analyzer"],
+                "ngram_range": list(vectorizer_params["ngram_range"]),
+                "lowercase": vectorizer_params["lowercase"],
+                "strip_accents": vectorizer_params["strip_accents"],
+                "token_pattern": vectorizer_params["token_pattern"],
+                "stop_words": vectorizer_params["stop_words"],
+                "norm": vectorizer_params["norm"],
+                "use_idf": vectorizer_params["use_idf"],
+                "smooth_idf": vectorizer_params["smooth_idf"],
+                "sublinear_tf": vectorizer_params["sublinear_tf"],
+                "binary": vectorizer_params["binary"],
+            },
+        }
+        arrays = io.BytesIO()
+        np.savez_compressed(
+            arrays,
+            idf=np.asarray(idf, dtype=np.float64),
+            coefficients=np.asarray(coefficients, dtype=np.float64),
+            intercept=np.asarray(intercept, dtype=np.float64),
+        )
+        with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("model.json", json.dumps(config, separators=(",", ":")))
+            archive.writestr("parameters.npz", arrays.getvalue())
 
     @classmethod
     def load(cls, path: str | Path) -> SemPred:
-        with Path(path).open("rb") as f:
-            model = pickle.load(f)
-        if not isinstance(model, cls):
-            raise TypeError("model file does not contain a SemPred model")
-        # Normalize models serialized by earlier SemPred versions.
-        model.cache_size = getattr(model, "cache_size", 10_000)
-        cached = getattr(model, "_cache", {})
-        model._cache = OrderedDict(cached)
-        while len(model._cache) > model.cache_size:
-            model._cache.popitem(last=False)
+        path = Path(path)
+        if not zipfile.is_zipfile(path):
+            raise ValueError(
+                "unsupported SemPred model format; pickle models are not loaded"
+            )
+        with zipfile.ZipFile(path) as archive:
+            config = json.loads(archive.read("model.json"))
+            if config.get("format") != "sempred-tfidf" or config.get("format_version") != 1:
+                raise ValueError("unsupported SemPred model archive version")
+            vocabulary = config.get("vocabulary")
+            if not isinstance(vocabulary, dict) or not vocabulary:
+                raise ValueError("model archive has an invalid vocabulary")
+            vocabulary = {str(token): int(index) for token, index in vocabulary.items()}
+            if sorted(vocabulary.values()) != list(range(len(vocabulary))):
+                raise ValueError("model archive vocabulary indices are invalid")
+            with np.load(io.BytesIO(archive.read("parameters.npz")), allow_pickle=False) as weights:
+                idf = np.asarray(weights["idf"], dtype=np.float64)
+                coefficients = np.asarray(weights["coefficients"], dtype=np.float64)
+                intercept = np.asarray(weights["intercept"], dtype=np.float64)
+
+        if idf.shape != (len(vocabulary),) or coefficients.shape != (1, len(vocabulary)) or intercept.shape != (1,):
+            raise ValueError("model archive parameter dimensions do not match its vocabulary")
+        if not (np.isfinite(idf).all() and np.isfinite(coefficients).all() and np.isfinite(intercept).all()):
+            raise ValueError("model archive contains non-finite parameters")
+        vectorizer_params = dict(config["vectorizer"])
+        vectorizer_params["ngram_range"] = tuple(vectorizer_params["ngram_range"])
+        vectorizer = TfidfVectorizer(**vectorizer_params)
+        vectorizer.vocabulary_ = vocabulary
+        vectorizer.fixed_vocabulary_ = True
+        vectorizer.idf_ = idf
+
+        model = cls.__new__(cls)
+        model.pipeline = None
+        model.threshold = float(config["threshold"])
+        model.abstain_margin = float(config["abstain_margin"])
+        model.cache_size = int(config["cache_size"])
+        if not 0.0 <= model.threshold <= 1.0 or not 0.0 <= model.abstain_margin <= 1.0 or model.cache_size < 0:
+            raise ValueError("model archive contains invalid runtime settings")
+        model._cache = OrderedDict()
+        model._safe_vectorizer = vectorizer
+        model._safe_coefficients = coefficients[0]
+        model._safe_intercept = float(intercept[0])
         return model
