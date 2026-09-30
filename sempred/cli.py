@@ -150,10 +150,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="sempred", description="Train and query a local semantic-predicate model.")
     commands = parser.add_subparsers(dest="command", required=True)
 
-    train = commands.add_parser("train", help="fine-tune an NLI encoder from labeled JSONL")
+    train = commands.add_parser("train", help="train a predicate model from labeled JSONL")
     train.add_argument("--data", type=Path, required=True, help="JSONL with text, predicate, and binary label fields")
     train.add_argument("--model", type=Path, required=True, help="output path for the trained model")
-    train.add_argument("--backend", choices=("nli", "tfidf"), default="nli", help="use the semantic encoder by default; tfidf is a baseline")
+    train.add_argument("--backend", choices=("nli", "tfidf"), default="tfidf", help="TF-IDF baseline by default; select nli explicitly for the experimental cross-encoder")
     train.add_argument("--base-model", type=Path, default=Path("models/sempred-nli"), help="local checkpoint directory saved by download-nli")
     train.add_argument("--epochs", type=int, default=1)
     train.add_argument("--batch-size", type=int, default=32)

@@ -27,9 +27,9 @@ class Prediction:
 class SemPred:
     """Legacy TF-IDF/logistic-regression baseline.
 
-    Use :class:`sempred.nli.NLISemPred` for the transformer cross-encoder
-    backend. This class stays available for fast lexical baselines and existing
-    safe JSON/NumPy model archives.
+    This remains available for baseline comparisons and existing safe
+    JSON/NumPy model archives. The frozen-embedding experiment is implemented
+    by :class:`sempred.fewshot.FewShotSemPred`.
     """
 
     def __init__(self, pipeline: Pipeline, threshold: float = 0.5, abstain_margin: float = 0.0, cache_size: int = 10_000):

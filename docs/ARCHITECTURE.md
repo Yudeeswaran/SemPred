@@ -45,19 +45,17 @@ SQL / Python / DataFrame
 
 ## Current implementation
 
-The preferred runtime is a local pretrained NLI cross-encoder, exposed through
-`NLISemPred`. The command line fine-tunes this encoder by default. `SemPred`
-still exposes the earlier TF-IDF + logistic-regression model as an explicit
-fast lexical baseline so existing integrations and comparisons remain usable.
-
-Neither model has met the current 85% accuracy gate on all hard and stress
-benchmarks. The neural backend is the current candidate, not a promoted model.
+`SemPred` provides the TF-IDF reference backend and the command line selects it
+by default. `NLISemPred` retains the earlier local NLI cross-encoder experiment.
+`FewShotSemPred` contains the frozen-embedding and per-predicate-head
+experiment. Neither neural approach met the Banking77 accuracy comparison;
+neither is promoted as the product model.
 
 ## Intended production model
 
-The candidate is a pretrained NLI/semantic cross-encoder fine-tuned on
-predicate examples and hard negatives. Model weights are downloaded separately
-and pinned to a repository revision; they are not checked into source control.
+There is no validated production model candidate yet. The recent Banking77
+few-shot experiment is documented in the evaluation record; any next candidate
+needs a new independent evaluation rather than further tuning on that test set.
 
 ## Runtime contract
 

@@ -25,6 +25,11 @@ nli = [
   "protobuf>=4.25",
   "sentencepiece>=0.2",
 ]
+embeddings = [
+  "torch>=2.6",
+  "transformers>=4.50,<5",
+  "safetensors>=0.4",
+]
 ml = [
   "torch>=2.6",
   "transformers>=4.50,<5",

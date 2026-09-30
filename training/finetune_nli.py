@@ -117,7 +117,7 @@ def main() -> int:
     parser.add_argument("--base-model-id", help="source model name for metadata when base-model is a raw local HF checkpoint")
     parser.add_argument("--base-revision", help="immutable source revision for metadata on raw HF checkpoints")
     parser.add_argument("--hypothesis-template", help="override hypothesis wording with one {predicate} placeholder")
-    parser.add_argument("--train-data", type=Path, action="append", default=[])
+    parser.add_argument("--train-data", type=Path, action="append", required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--epochs", type=int, default=2)
     parser.add_argument("--batch-size", type=int, default=32)
@@ -144,9 +144,6 @@ def main() -> int:
 
     if args.epochs < 1 or args.batch_size < 1 or args.learning_rate <= 0:
         parser.error("epochs, batch-size, and learning-rate must be positive")
-    if not args.train_data:
-        args.train_data = [Path("data/sempred_32k_adversarial.jsonl")]
-
     rows, dataset_hashes = load_jsonl(args.train_data)
     if len({int(row["label"]) for row in rows}) != 2:
         raise ValueError("training data must contain both binary classes")

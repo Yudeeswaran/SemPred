@@ -6,6 +6,11 @@ Python or DuckDB. The API returns a score and one of three decisions:
 low-consequence filtering and triage of English support-ticket text. Unknown
 records remain available for review.
 
+The latest all-intent Banking77 experiment found that a 16-example frozen
+embedding head reached 72.16% accuracy, below the full-data TF-IDF baseline at
+85.45%. Neither that approach nor the older NLI cross-encoder is approved as
+the product model. See the [few-shot evaluation](EVALUATION.md#frozen-embedding-few-shot-hypothesis).
+
 ## Current interfaces
 
 - Python API for single and batched predictions.

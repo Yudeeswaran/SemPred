@@ -7,6 +7,13 @@ published stress score is below SemPred's release target, and the stress set
 has already been inspected during development. Do not use the reported score
 as a blind release result.
 
+The current all-intent evaluation found that frozen MiniLM embeddings with 16
+labeled examples per Banking77 intent reached 72.16% accuracy, below the
+85.45% full-data TF-IDF baseline. The NLI cross-encoder is not the preferred
+product direction, and the few-shot model is not promoted. See the current
+[Banking77 experiment](EVALUATION.md#frozen-embedding-few-shot-hypothesis)
+for methodology and throughput details.
+
 ## Default base checkpoint
 
 - Model: [`MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli`](https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli)

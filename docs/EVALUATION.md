@@ -17,6 +17,46 @@ The official PolyAI Banking77 test split is pinned and evaluated separately
 from the synthetic SemPred suites. On a single-predicate task using the
 released `card swallowed` category, zero-shot MiniLM reached 0.34 F1 at 34.5
 rows/sec; the synthetic-corpus fine-tune reached 0.11 F1 at 25.0 rows/sec.
+
+Those figures are binary results for one predicate and must not be compared
+with the multi-class results below. The one-predicate FLAN-T5 and NLI numbers
+in the original README are retained in the raw benchmark JSON files only.
+
+### Frozen-embedding few-shot hypothesis
+
+This experiment tested whether frozen `sentence-transformers/all-MiniLM-L6-v2`
+embeddings plus a small balanced logistic-regression head per intent could
+approach the 77-class TF-IDF baseline with 16 labeled examples per intent. The
+official 10,003-example train split supplied support sets; the official
+3,080-example test split was not used for fitting or tuning. For each of ten
+seeds, each intent received four or eight positive examples and the same
+number of negative examples sampled from other intents. Head fitting and model
+settings were fixed before evaluating the test split.
+
+| Support examples per intent | Accuracy mean ± SD | Macro F1 mean ± SD | Head fit time | Warm cached-vector scoring |
+| ---: | ---: | ---: | ---: | ---: |
+| 8 | 62.70% ± 2.30 pp | 61.96% ± 2.48 pp | 0.28 sec | 610k ticket rows/sec across all 77 heads, cached vectors |
+| 16 | 72.16% ± 1.92 pp | 71.87% ± 2.07 pp | 0.29 sec | 550k ticket rows/sec across all 77 heads, cached vectors |
+| TF-IDF, all train rows | 85.45% | — | 15.08 sec | 41,880 tickets/sec |
+
+The 16-shot model trails the full-data TF-IDF score by 13.29 percentage
+points. The stated quality hypothesis therefore failed, despite fast head
+fitting and scoring. On an Intel Family 6 Model 154 CPU with 8 PyTorch threads,
+the encoder embedded 13,072 unique train/test texts at 77 texts/sec. The
+DuckDB Arrow UDF scored 237,160 candidate pairs across all 77 intents at
+4,953 pairs/sec end to end and embedded each of 3,079 unique test texts once.
+This corresponds to 64 unique ticket texts/sec when testing every intent;
+head-only throughput excludes embedding time. DuckDB returned SQL `NULL` for
+133,070 pairs inside the configured abstention margin. Ranking accuracy uses
+the highest-scoring of 77 heads before abstention, so it and binary abstention
+coverage are separate metrics. This experiment does not support promoting
+few-shot embeddings as the product model.
+
+The benchmark and full per-seed report are in
+[`benchmark/banking77_fewshot.py`](../benchmark/banking77_fewshot.py) and
+[`benchmark/results/banking77-fewshot.json`](../benchmark/results/banking77-fewshot.json).
+Its data and embedding cache are local-only; exact data hashes and the encoder
+revision are recorded in the report.
 Dynamic int8 increased speed to 54.0 rows/sec but reduced F1 to 0.05 at the
 unchanged threshold. FLAN-T5-small answered no for every example: 27.7
 rows/sec, with 0.00 F1. The predicate has only 40 positive test examples among

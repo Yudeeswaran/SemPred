@@ -1,252 +1,120 @@
 # SemPred
 
-SemPred evaluates a natural-language condition against rows of text in Python
-or DuckDB. The first use case to validate is local support-ticket triage: score
-a condition such as “the customer is requesting a refund” and route uncertain
-rows for review.
+SemPred evaluates natural-language predicates against support-ticket text in
+Python or DuckDB. It returns a score and a tri-state decision: `true`, `false`,
+or `unknown` when the score is too close to the threshold. `unknown` maps to
+SQL `NULL` in DuckDB so uncertain rows can be routed for review.
 
-> **Product status: research prototype.** SemPred's preferred backend is a local
-> transformer cross-encoder. The TF-IDF implementation remains available as a
-> fast lexical baseline. No current checkpoint reaches 85% accuracy on both
-> the project's hard and compositional stress suites, so the model is not yet
-> approved for production decisions.
+**Status: research prototype, not ready for production use.** The current
+few-shot experiment is fast after embedding, but misses the accuracy of the
+full-data TF-IDF baseline on Banking77. No backend is promoted as a dependable
+customer-facing classifier.
 
-## Install
+## Current experiment
 
-```bash
-python -m pip install "sempred[nli,duckdb]"
-```
+The active hypothesis is a frozen `all-MiniLM-L6-v2` sentence encoder plus a
+small balanced logistic-regression head for each predicate. For each input
+text, the encoder is called once; candidate predicate heads operate on the
+cached vector. The encoder weights are pinned to an immutable revision and
+head archives use JSON and NumPy data, not pickle.
 
-For local development, clone the repository and run
-`python -m pip install -e ".[nli,duckdb]"`. Python 3.10 or newer is required.
+The experiment uses the official [PolyAI Banking77](https://huggingface.co/datasets/PolyAI/banking77/tree/796a4623935746f71378f0ebd435635a8ce08e50)
+train and test splits. Each predicate gets a balanced support set sampled from
+the training split. Results below are 10 support-sampling seeds over the full
+3,080-ticket, 77-intent test set. No templates or generated examples are used.
+The full-data TF-IDF result is the existing 77-class baseline, trained on all
+10,003 official training examples.
 
-## Train and predict
+| Method | Labeled examples per predicate | Full-test accuracy | Macro F1 | Inference throughput |
+| --- | ---: | ---: | ---: | ---: |
+| TF-IDF + logistic regression | Full train split | 85.45% | — | 41,880 tickets/sec |
+| Frozen MiniLM + predicate heads | 8 (4 positive, 4 negative) | 62.70% ± 2.30 pp | 61.96% ± 2.48 pp | 610k tickets/sec across all 77 heads, cached vectors |
+| Frozen MiniLM + predicate heads | 16 (8 positive, 8 negative) | 72.16% ± 1.92 pp | 71.87% ± 2.07 pp | 550k tickets/sec across all 77 heads, cached vectors |
 
-Create a UTF-8 JSONL file with one labeled example per line. Keep a stable
-`family` for each behavior and, where possible, a `construction` label for the
-outer writing pattern. Validation holds out construction groups first, then
-falls back to family groups when the data has little construction diversity:
+The 16-shot result is **13.29 percentage points below** the TF-IDF baseline,
+so the few-shot model does not meet the accuracy criterion and is not a
+replacement. On the documented CPU, the encoder processed 13,072 unique
+training and test texts at 77 texts/sec. The DuckDB Arrow UDF scored 237,160
+ticket-predicate pairs (all 77 predicates) at 4,953 pairs/sec end to end,
+embedding each of 3,079 unique test texts once. The warm head-only rate is not
+the end-to-end rate. DuckDB returned `NULL` for 133,070 low-confidence pairs
+at the default abstention margin. Ranking accuracy uses the highest-scoring
+of 77 heads before abstention; multi-class accuracy and binary abstention
+coverage are separate metrics.
 
-```json
-{"text":"The customer says: I want my money back.","predicate":"customer is requesting a refund","label":1,"family":"refund","construction":"reported_speech"}
-{"text":"Earlier, the order arrived on time.","predicate":"customer is requesting a refund","label":0,"family":"refund","construction":"historical"}
-```
+These are machine-specific measurements on Python 3.13.5, Windows 11, an Intel
+Family 6 Model 154 CPU, and 8 PyTorch threads. The dataset is CC BY 4.0; retain
+the PolyAI attribution and cite Casanueva et al. (2020),
+[“Efficient Intent Detection with Dual Sentence Encoders”](https://arxiv.org/abs/2003.04807).
+See the raw runs and pinned data hashes in
+[`benchmark/results/banking77-fewshot.json`](benchmark/results/banking77-fewshot.json).
 
-Download the pinned transformer checkpoint, then fine-tune it on your data:
+## Reproduce
 
-```bash
-sempred download-nli --output models/sempred-nli
-sempred train --data labeled.jsonl --base-model models/sempred-nli --model models/sempred-finetuned --epochs 1 --max-length 128
-sempred predict --model models/sempred-finetuned --text "Please return my payment" --predicate "customer is requesting a refund"
-```
-
-The sample rows only show the format. For the default split, provide at least
-three construction groups (or three family groups if no construction groups
-are available), with both labels represented in training and validation. If
-`construction` is omitted, the trainer recognizes common wrappers and falls
-back to `family`; if `family` is also omitted, it groups by exact predicate
-text. Use `--validation-group-count` to change how many groups are held out.
-This split reduces known template leakage, but it is not a substitute for a
-new, independently authored final benchmark. Run `sempred train --help` for
-options.
-
-Before fine-tuning generated adversarial data, inspect potential label conflicts:
-
-```bash
-python -m training.audit_labels --data labeled.jsonl --output artifacts/label-audit.json
-```
-
-The audit flags rows for review; it never changes labels automatically.
-
-The command prints a JSON object with `probability`, `label`, and `decision`.
-`unknown` means the score falls inside the configured abstention margin around
-the decision threshold. Probabilities are model scores; calibrate them on a
-separate representative validation set before interpreting them as confidence.
-
-## Pretrained NLI model
-
-For a real pretrained semantic encoder, install the optional runtime and save
-the pinned MIT-licensed model locally:
+Install the benchmark/runtime dependencies and fetch the hash-verified dataset:
 
 ```bash
-python -m pip install "sempred[nli]"
-sempred download-nli --output models/sempred-nli --cache-dir .cache/huggingface
-sempred predict --model models/sempred-nli --text "I cancelled last month" --predicate "customer wants to cancel a subscription"
-sempred calibrate --model models/sempred-nli --output models/sempred-nli-calibrated --data heldout-calibration.jsonl
+python -m pip install -e ".[embeddings,duckdb,dev]"
+python benchmark/fetch_banking77.py
+python -c 'from sempred import FrozenTextEncoder; FrozenTextEncoder.download("models/all-MiniLM-L6-v2")'
+python -m benchmark.banking77_fewshot \
+  --train-data .cache/research-data/banking77_train.parquet \
+  --test-data .cache/research-data/banking77_test.parquet \
+  --dataset-card .cache/research-data/banking77_README.md \
+  --encoder models/all-MiniLM-L6-v2 \
+  --seeds 10 \
+  --output benchmark/results/banking77-fewshot.json
 ```
 
-The first command downloads the checkpoint from Hugging Face; inference after
-that uses the saved local model. The current default is
-[`MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli`](https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli),
-pinned to a fixed revision so reruns use the same weights. This pretrained
-checkpoint is an evaluation candidate, not a promoted SemPred model. Its
-entailment score must pass the release benchmarks before production use.
-Calibration data must be held out from training and final evaluation, and must
-reflect the workload where scores will be used.
+The pinned encoder is `sentence-transformers/all-MiniLM-L6-v2` at revision
+`1110a243fdf4706b3f48f1d95db1a4f5529b4d41`. The benchmark stores its derived
+vectors under the ignored `.cache/` directory for repeat runs; dataset files,
+models, and customer corpora are not committed.
 
-To fine-tune on your labeled corpus, from a source checkout run:
+## Python and DuckDB API
 
-```bash
-sempred train --backend nli --data labeled.jsonl --base-model models/sempred-nli --model models/sempred-finetuned --epochs 1
-```
-
-Validation holds out construction groups when available and falls back to
-complete family groups when it cannot identify enough distinct constructions.
-This reduces template leakage but does not prove generalization to unseen
-domains. Do not use the final evaluation dataset for fine-tuning or calibration.
-
-## Python API
+Use real, labeled examples from your own training split. Every predicate needs
+both positive and negative examples. Keep final evaluation and calibration
+examples out of the support set.
 
 ```python
-from sempred import NLISemPred
-
-model = NLISemPred.load("models/sempred-nli")
-result = model.predict("I cancelled last month", "customer wants to cancel a subscription")
-print(result.probability, result.decision)
-
-batch = model.predict_batch(texts, "customer wants to cancel a subscription")
-```
-
-`SemPred.fit(...)` remains available for the lightweight TF-IDF baseline; use
-`sempred train --backend tfidf` to select it explicitly. Both backends bound
-their in-memory prediction cache (10,000 pairs by default); set
-`cache_size=0` when constructing a model to disable it for high-cardinality
-streaming workloads.
-
-## DuckDB
-
-```python
-import duckdb
-from sempred import NLISemPred
+from sempred import FewShotSemPred, FrozenTextEncoder
 from sempred.duckdb import register
+import duckdb
 
-model = NLISemPred.load("models/sempred-finetuned")
+FrozenTextEncoder.download("models/all-MiniLM-L6-v2")
+encoder = FrozenTextEncoder("models/all-MiniLM-L6-v2")
+model = FewShotSemPred.fit(
+    texts=real_labeled_texts,
+    predicates=predicate_names,
+    labels=binary_labels,
+    encoder=encoder,
+    abstain_margin=0.1,
+)
+model.save("models/customer-support.zip")
+
 con = register(duckdb.connect(), model)
 rows = con.execute("""
-    SELECT ticket_text, SEM_SCORE(ticket_text, 'customer is requesting a refund') AS score
+    SELECT ticket_text,
+           SEM_SCORE(ticket_text, 'refund request') AS score,
+           SEM_PREDICT(ticket_text, 'refund request') AS decision
     FROM tickets
-    WHERE SEM_PREDICT(ticket_text, 'customer is requesting a refund') IS TRUE
 """).fetchall()
 ```
 
-`SEM_PREDICT` maps `unknown` to SQL `NULL`; `SEM_SCORE` returns the raw model
-score. With the `duckdb` extra, SemPred registers Arrow UDFs and scores each
-DuckDB chunk through the batch API. Without PyArrow it falls back to scalar
-Python UDFs. The vectorized path still needs an end-to-end million-row
-benchmark before its throughput can be claimed.
+`predict_many(texts, predicates)` batches mixed predicates and deduplicates
+text embeddings. The in-memory embedding cache is bounded (10,000 unique texts
+by default); set `cache_size=0` to disable it. `SEM_PREDICT` maps `unknown` to
+SQL `NULL`. Install the `duckdb` extra to enable Arrow UDFs.
 
-## Independent benchmark
+## Project scope
 
-The benchmark uses the official [PolyAI Banking77](https://huggingface.co/datasets/PolyAI/banking77/tree/796a4623935746f71378f0ebd435635a8ce08e50)
-test split (3,080 examples, 77 intents), pinned to an immutable dataset
-revision. Candidate predicates come directly from the released intent names;
-only underscores are replaced with spaces. No SemPred task templates are
-written for this evaluation. The TF-IDF classifier is trained on the separate
-official 10,003-example training split. The dataset is CC BY 4.0; see its card
-for the required PolyAI attribution. Cite Casanueva et al. (2020),
-[“Efficient Intent Detection with Dual Sentence Encoders”](https://arxiv.org/abs/2003.04807).
+SemPred is not validated for customer workloads or high-impact decisions. The
+one-predicate NLI and small-LLM numbers in the history are binary evaluations
+and cannot be compared with the 77-way intent results above. Synthetic-data
+generation and its demo benchmarks have been removed; historical synthetic
+results remain labeled as development-only evidence in
+[`docs/EVALUATION.md`](docs/EVALUATION.md).
 
-| Baseline | Training / prompt setup | Accuracy | Inference rows/sec | Evaluation |
-| --- | --- | ---: | ---: | --- |
-| TF-IDF + logistic regression | Banking77 train split, one-vs-rest | 98.73% | 46,417 | Full test split; predicate `card swallowed` |
-| Zero-shot MiniLM NLI | `cross-encoder/nli-MiniLM2-L6-H768` | 97.89% | 34.5 | Same binary predicate task |
-| Fine-tuned MiniLM NLI | Synthetic SemPred corpus; no Banking77 training | 85.88% | 25.0 | Same binary predicate task |
-| Zero-shot MiniLM NLI, dynamic int8 | Same zero-shot checkpoint, CPU int8 | 98.73% | 54.0 | Same task; quality regressed |
-| [FLAN-T5-small](https://huggingface.co/google/flan-t5-small) | Pinned zero-shot yes/no prompt | 98.70% | 27.7 | Same binary task; predicted no for every row |
-
-All measured rows use the full 3,080-example test split and a single candidate
-predicate, `card swallowed`, taken from the official category list. There are
-40 positive examples and 3,040 negatives. Raw accuracy is therefore misleading;
-balanced accuracy and F1 are more informative:
-
-| Baseline | Balanced accuracy | Precision | Recall | F1 |
-| --- | ---: | ---: | ---: | ---: |
-| TF-IDF + logistic regression | 51.25% | 1.00 | 0.025 | 0.049 |
-| Zero-shot MiniLM NLI | 70.56% | 0.288 | 0.425 | 0.343 |
-| Fine-tuned MiniLM NLI | 75.58% | 0.058 | 0.650 | 0.107 |
-| Zero-shot MiniLM NLI, dynamic int8 | 51.25% | 1.00 | 0.025 | 0.049 |
-| FLAN-T5-small | 50.00% | 0.000 | 0.000 | 0.000 |
-
-The NLI checkpoints were run on CPU with 8 PyTorch threads and batch size 128.
-FLAN-T5-small used batch size 64 and the same 8-thread CPU.
-Rates include tokenization and forward inference, exclude model loading, and
-were measured on a Windows 11 laptop with an Intel `Family 6 Model 154` CPU,
-Python 3.13.5, and PyTorch 2.14.0+cpu. TF-IDF inference excludes fit; the
-one-vs-rest fit took 0.4 seconds. These are single-machine measurements, not
-general performance guarantees. Dynamic int8 increased speed by about 56% but
-reduced F1 from 0.343 to 0.049 at the unchanged 0.5 threshold. This row uses
-PyTorch's deprecated dynamic-quantization API as an experiment; choose and
-revalidate a maintained quantization runtime before shipping int8 inference.
-
-A separate 77-way intent-classification baseline reaches 85.45% top-1 accuracy
-and 41,880 rows/sec on the full test split when trained on the official
-Banking77 training split. This is a conventional intent classifier; it should
-not be confused with the one-predicate results above or SemPred's binary API.
-
-The FLAN-T5 run used `google/flan-t5-small` at revision
-`0fc9ddf78a1e988dac52e2dac162b0ede4fd74ab` (Apache-2.0) and a fixed yes/no
-prompt. Its 98.70% raw accuracy hides that it answered “no” for every row; its
-balanced accuracy and F1 are both zero. The checkpoint weights are verified by
-SHA-256 in the runner. FLAN-T5 is an instruction-tuned encoder-decoder model,
-included here as a small generative baseline, not a hosted general-purpose
-assistant.
-
-To reproduce these runs, install the development extras and fetch the
-hash-checked dataset and model files:
-
-```bash
-python -m pip install -e ".[dev,nli]"
-python benchmark/fetch_banking77.py
-python -m benchmark.fetch_flan_t5
-python benchmark/banking77.py \
-  --dataset .cache/research-data/banking77_test.parquet \
-  --train-data .cache/research-data/banking77_train.parquet \
-  --backend tfidf \
-  --mode predicate --predicate "card swallowed" \
-  --output .cache/research-data/banking77-tfidf.json
-```
-
-Run the LLM baseline with:
-
-```bash
-python -m benchmark.banking77_llm \
-  --dataset .cache/research-data/banking77_test.parquet \
-  --model-dir .cache/research-data/flan-t5-small \
-  --output .cache/research-data/banking77-flan-t5-small.json
-```
-
-Replace `--backend tfidf` with `--backend nli --model models/sempred-nli` or
-`--model models/sempred-finetuned-v3-neutral` for the NLI rows; add
-`--dynamic-int8` to reproduce the quantized row. A 77-way NLI run is also
-available by omitting `--mode predicate`, but the full 77-candidate CPU run is
-costly. One predicate on one public dataset does not establish quality for
-another support workload or make automated decisions safe without customer
-data, calibration, and review.
-
-## Model files and privacy
-
-Inference runs locally. Training data and text are not sent to a service by
-this package. TF-IDF models are saved as a ZIP archive containing JSON
-configuration and NumPy arrays; NumPy loading disables pickle. Older pickle
-model files are intentionally rejected and must be retrained. Transformer
-checkpoints use Hugging Face safetensors. Keep training examples representative,
-and review errors before deploying any filter that might discard important
-records.
-
-## Project status and documentation
-
-SemPred is not ready for sale. It has an independent public support-ticket
-benchmark, but no customer pilot or customer-specific evaluation. Product
-scope, model details, evaluation history, architecture, and reproducibility
-notes are in the linked docs. Workload-level validation, calibrated quality
-claims, optimized inference, and the million-row DuckDB benchmark remain open.
-
-- [Product scope](docs/PRODUCT.md)
-- [Model card](docs/MODEL_CARD.md)
-- [Evaluation history](docs/EVALUATION.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Reproducibility](docs/REPRODUCIBILITY.md)
-
-## License
-
-MIT. See [LICENSE](LICENSE).
+See [product scope](docs/PRODUCT.md), [evaluation history](docs/EVALUATION.md),
+and the [model card](docs/MODEL_CARD.md).
