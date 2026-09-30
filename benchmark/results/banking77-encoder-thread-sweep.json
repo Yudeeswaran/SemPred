@@ -1,0 +1,587 @@
+{
+  "encoder": {
+    "model": "sentence-transformers/all-MiniLM-L6-v2",
+    "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "max_length": 128,
+    "sample_size": 512,
+    "token_length_mean": 14.583984375,
+    "token_length_p95": 30.0
+  },
+  "torch_results": [
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 32,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 4.898679299978539,
+      "texts_per_second": 104.51796671038315,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 32,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 1.8723502000793815,
+      "texts_per_second": 273.4531178933796,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 32,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 1.8632217000704259,
+      "texts_per_second": 274.7928493859037,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 64,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 5.2156517000403255,
+      "texts_per_second": 98.16606427074902,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 64,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 2.1084022999275476,
+      "texts_per_second": 242.83790622766546,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 64,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 2.1263691000640392,
+      "texts_per_second": 240.78604226546568,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 128,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 5.77034469996579,
+      "texts_per_second": 88.72953465033648,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 128,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 2.7715412999968976,
+      "texts_per_second": 184.73475390771665,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 128,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 2.764350000070408,
+      "texts_per_second": 185.21533090489964,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 256,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 6.2040429001208395,
+      "texts_per_second": 82.52683101047343,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 256,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 4.023601499851793,
+      "texts_per_second": 127.24918211181182,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 1,
+      "batch_size": 256,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 4.078642000211403,
+      "texts_per_second": 125.53197852948658,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 32,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 1.9263716000132263,
+      "texts_per_second": 265.78464923199897,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 32,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 0.7586453999392688,
+      "texts_per_second": 674.8871080494084,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 32,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 0.8079871998634189,
+      "texts_per_second": 633.673404834319,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 64,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 2.194783400045708,
+      "texts_per_second": 233.28042302002888,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 64,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 0.8736803999636322,
+      "texts_per_second": 586.0266523334076,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 64,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 0.8509967001155019,
+      "texts_per_second": 601.6474563655871,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 128,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 2.39242499996908,
+      "texts_per_second": 214.00879860669284,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 128,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 1.1051739999093115,
+      "texts_per_second": 463.27546616371154,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 128,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 1.067906100070104,
+      "texts_per_second": 479.4429022986095,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 256,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 2.416723000118509,
+      "texts_per_second": 211.8571304923622,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 256,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 1.6374906001146883,
+      "texts_per_second": 312.6735505926813,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 4,
+      "batch_size": 256,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 1.6592351000290364,
+      "texts_per_second": 308.5759215141001,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 32,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 1.8310855999588966,
+      "texts_per_second": 279.6155461063607,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 32,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 0.8194283000193536,
+      "texts_per_second": 624.8258694359315,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 32,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 0.7675432001706213,
+      "texts_per_second": 667.0634302879431,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 64,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 1.9908455000258982,
+      "texts_per_second": 257.1771641713732,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 64,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 0.8158647001255304,
+      "texts_per_second": 627.5550344575795,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 64,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 0.814602900063619,
+      "texts_per_second": 628.5271019290672,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 128,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 2.148647999856621,
+      "texts_per_second": 238.2893801284183,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 128,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 1.0377813000231981,
+      "texts_per_second": 493.36020989061467,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 128,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 1.165147199993953,
+      "texts_per_second": 439.42945578263175,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 256,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 2.2954822999890894,
+      "texts_per_second": 223.04680807272337,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 256,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 1.4838229001034051,
+      "texts_per_second": 345.05465575731415,
+      "texts": 512
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 256,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 1.5035832999274135,
+      "texts_per_second": 340.51987676686565,
+      "texts": 512
+    }
+  ],
+  "onnx": {
+    "available": true,
+    "version": "1.30.0",
+    "path": ".cache\\research-data\\minilm-encoder.onnx",
+    "torch_parity": {
+      "examples": 32,
+      "cosine_similarity_mean": 1.0,
+      "cosine_similarity_min": 0.9999998807907104,
+      "max_absolute_embedding_difference": 1.6391277313232422e-07
+    },
+    "results": [
+      {
+        "runtime": "onnxruntime",
+        "threads": 1,
+        "batch_size": 32,
+        "order": "sampled",
+        "seconds": 4.688968300120905,
+        "texts_per_second": 109.19246350776099
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 1,
+        "batch_size": 32,
+        "order": "length_sorted",
+        "seconds": 1.7569398002233356,
+        "texts_per_second": 291.4157900771082
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 1,
+        "batch_size": 64,
+        "order": "sampled",
+        "seconds": 5.173655400052667,
+        "texts_per_second": 98.96291121259989
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 1,
+        "batch_size": 64,
+        "order": "length_sorted",
+        "seconds": 2.0608701000455767,
+        "texts_per_second": 248.43875409162226
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 1,
+        "batch_size": 128,
+        "order": "sampled",
+        "seconds": 5.86021939991042,
+        "texts_per_second": 87.36874254363693
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 1,
+        "batch_size": 128,
+        "order": "length_sorted",
+        "seconds": 2.7753939998801798,
+        "texts_per_second": 184.47831191611147
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 1,
+        "batch_size": 256,
+        "order": "sampled",
+        "seconds": 6.4253283001016825,
+        "texts_per_second": 79.68464428376329
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 1,
+        "batch_size": 256,
+        "order": "length_sorted",
+        "seconds": 4.232907500118017,
+        "texts_per_second": 120.95704902262216
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 4,
+        "batch_size": 32,
+        "order": "sampled",
+        "seconds": 1.7058015998918563,
+        "texts_per_second": 300.15213963479664
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 4,
+        "batch_size": 32,
+        "order": "length_sorted",
+        "seconds": 0.7182255000807345,
+        "texts_per_second": 712.8680337059141
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 4,
+        "batch_size": 64,
+        "order": "sampled",
+        "seconds": 1.9616720001213253,
+        "texts_per_second": 261.0018392311935
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 4,
+        "batch_size": 64,
+        "order": "length_sorted",
+        "seconds": 0.826088699977845,
+        "texts_per_second": 619.788165621599
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 4,
+        "batch_size": 128,
+        "order": "sampled",
+        "seconds": 2.367692499887198,
+        "texts_per_second": 216.24429693652903
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 4,
+        "batch_size": 128,
+        "order": "length_sorted",
+        "seconds": 1.0774872999172658,
+        "texts_per_second": 475.17961468252446
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 4,
+        "batch_size": 256,
+        "order": "sampled",
+        "seconds": 2.515606600092724,
+        "texts_per_second": 203.529438975525
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 4,
+        "batch_size": 256,
+        "order": "length_sorted",
+        "seconds": 1.6196365000214428,
+        "texts_per_second": 316.1203146466639
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 32,
+        "order": "sampled",
+        "seconds": 1.4990717000328004,
+        "texts_per_second": 341.5447039583211
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 32,
+        "order": "length_sorted",
+        "seconds": 0.6055178998503834,
+        "texts_per_second": 845.5571670573395
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 64,
+        "order": "sampled",
+        "seconds": 1.643838700139895,
+        "texts_per_second": 311.46608238170046
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 64,
+        "order": "length_sorted",
+        "seconds": 0.6904007999692112,
+        "texts_per_second": 741.5982137083747
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 128,
+        "order": "sampled",
+        "seconds": 1.8620475002098829,
+        "texts_per_second": 274.96613268044416
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 128,
+        "order": "length_sorted",
+        "seconds": 0.8974752000067383,
+        "texts_per_second": 570.4893015385337
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 256,
+        "order": "sampled",
+        "seconds": 2.1085931002162397,
+        "texts_per_second": 242.81593255118474
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 256,
+        "order": "length_sorted",
+        "seconds": 1.3627691001165658,
+        "texts_per_second": 375.7056128996508
+      }
+    ]
+  },
+  "hardware": {
+    "python": "3.13.5",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+    "torch": "2.14.0+cpu"
+  },
+  "dataset": "PolyAI Banking77 official test split",
+  "dataset_revision": "796a4623935746f71378f0ebd435635a8ce08e50",
+  "dataset_sha256": "535fc96c4c2b4c2dbdeb0d4b31f24a4859620cf663d6c19c1bd1f97450c410be",
+  "sampling": "512 test texts sampled without replacement using NumPy seed 77; same sample across configurations"
+}

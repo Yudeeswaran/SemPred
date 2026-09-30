@@ -29,7 +29,8 @@ class FrozenTextEncoder:
         device: str = "cpu",
         local_files_only: bool = True,
         max_length: int = 128,
-        batch_size: int = 128,
+        batch_size: int = 32,
+        sort_by_length: bool = True,
     ):
         if max_length < 8 or batch_size < 1:
             raise ValueError(
@@ -59,6 +60,7 @@ class FrozenTextEncoder:
         self.device = torch.device(device)
         self.max_length = int(max_length)
         self.batch_size = int(batch_size)
+        self.sort_by_length = bool(sort_by_length)
         self.texts_encoded = 0
         self.encoder_batches = 0
         self.torch = torch
@@ -119,22 +121,38 @@ class FrozenTextEncoder:
             return np.empty((0, self.dimension), dtype=np.float32)
         self.texts_encoded += len(texts)
         self.encoder_batches += (len(texts) + self.batch_size - 1) // self.batch_size
-        vectors = []
+        encoded = self.tokenizer(
+            texts,
+            padding=False,
+            truncation=True,
+            max_length=self.max_length,
+            return_tensors=None,
+        )
+        lengths = np.asarray([len(input_ids) for input_ids in encoded["input_ids"]])
+        order = (
+            np.argsort(lengths, kind="stable")
+            if self.sort_by_length
+            else np.arange(len(texts))
+        )
+        vectors = np.empty((len(texts), self.dimension), dtype=np.float32)
         with self.torch.inference_mode():
             for start in range(0, len(texts), self.batch_size):
-                tokens = self.tokenizer(
-                    texts[start : start + self.batch_size],
-                    padding=True,
-                    truncation=True,
-                    max_length=self.max_length,
-                    return_tensors="pt",
+                batch_indices = order[start : start + self.batch_size]
+                features = [
+                    {key: values[int(index)] for key, values in encoded.items()}
+                    for index in batch_indices
+                ]
+                tokens = self.tokenizer.pad(
+                    features, padding=True, return_tensors="pt"
                 ).to(self.device)
                 hidden = self.model(**tokens).last_hidden_state
                 mask = tokens["attention_mask"].unsqueeze(-1).to(hidden.dtype)
                 pooled = (hidden * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1e-9)
                 normalized = self.torch.nn.functional.normalize(pooled, p=2, dim=1)
-                vectors.append(normalized.cpu().numpy().astype(np.float32, copy=False))
-        return np.concatenate(vectors, axis=0)
+                vectors[batch_indices] = (
+                    normalized.cpu().numpy().astype(np.float32, copy=False)
+                )
+        return vectors
 
 
 class FewShotSemPred:
@@ -352,6 +370,9 @@ class FewShotSemPred:
             "encoder": {
                 "model_name": self.encoder.model_name,
                 "revision": self.encoder.revision,
+                "max_length": self.encoder.max_length,
+                "batch_size": self.encoder.batch_size,
+                "sort_by_length": self.encoder.sort_by_length,
             },
             "threshold": self.threshold,
             "abstain_margin": self.abstain_margin,
@@ -395,7 +416,16 @@ class FewShotSemPred:
                 encoder_config["model_name"],
                 revision=encoder_config.get("revision"),
                 local_files_only=True,
+                max_length=encoder_config.get("max_length", 128),
+                batch_size=encoder_config.get("batch_size", 32),
+                sort_by_length=encoder_config.get("sort_by_length", True),
             )
+        else:
+            encoder_config = config["encoder"]
+            if encoder.model_name != encoder_config[
+                "model_name"
+            ] or encoder.revision != encoder_config.get("revision"):
+                raise ValueError("provided encoder does not match the saved model")
         heads = {
             predicate: (coefficients[index], float(intercepts[index]))
             for index, predicate in enumerate(config["predicates"])

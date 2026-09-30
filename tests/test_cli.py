@@ -9,20 +9,35 @@ from sempred.cli import _train, build_parser
 
 def test_train_defaults_to_tfidf_baseline(tmp_path: Path):
     data = tmp_path / "train.jsonl"
-    data.write_text('{"text":"example","predicate":"condition","label":1}\n', encoding="utf-8")
+    data.write_text(
+        '{"text":"example","predicate":"condition","label":1}\n', encoding="utf-8"
+    )
 
-    args = build_parser().parse_args(["train", "--data", str(data), "--model", str(tmp_path / "model")])
+    args = build_parser().parse_args(
+        ["train", "--data", str(data), "--model", str(tmp_path / "model")]
+    )
 
     assert args.backend == "tfidf"
 
 
 def test_train_nli_reports_missing_base_model(tmp_path: Path):
     data = tmp_path / "train.jsonl"
-    data.write_text('{"text":"example","predicate":"condition","label":1}\n', encoding="utf-8")
-    args = build_parser().parse_args([
-        "train", "--data", str(data), "--model", str(tmp_path / "out"),
-        "--backend", "nli", "--base-model", str(tmp_path / "missing"),
-    ])
+    data.write_text(
+        '{"text":"example","predicate":"condition","label":1}\n', encoding="utf-8"
+    )
+    args = build_parser().parse_args(
+        [
+            "train",
+            "--data",
+            str(data),
+            "--model",
+            str(tmp_path / "out"),
+            "--backend",
+            "nli",
+            "--base-model",
+            str(tmp_path / "missing"),
+        ]
+    )
 
     with pytest.raises(ValueError, match="download-nli"):
         _train(args)
@@ -30,8 +45,10 @@ def test_train_nli_reports_missing_base_model(tmp_path: Path):
 
 def test_train_rejects_malformed_jsonl(tmp_path: Path):
     data = tmp_path / "train.jsonl"
-    data.write_text('{broken json}\n', encoding="utf-8")
-    args = build_parser().parse_args(["train", "--data", str(data), "--model", str(tmp_path / "out")])
+    data.write_text("{broken json}\n", encoding="utf-8")
+    args = build_parser().parse_args(
+        ["train", "--data", str(data), "--model", str(tmp_path / "out")]
+    )
 
     with pytest.raises(ValueError, match="invalid JSON"):
         _train(args)

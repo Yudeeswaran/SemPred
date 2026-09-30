@@ -19,35 +19,66 @@ cached vector. The encoder weights are pinned to an immutable revision and
 head archives use JSON and NumPy data, not pickle.
 
 The experiment uses the official [PolyAI Banking77](https://huggingface.co/datasets/PolyAI/banking77/tree/796a4623935746f71378f0ebd435635a8ce08e50)
-train and test splits. Each predicate gets a balanced support set sampled from
-the training split. Results below are 10 support-sampling seeds over the full
-3,080-ticket, 77-intent test set. No templates or generated examples are used.
-The full-data TF-IDF result is the existing 77-class baseline, trained on all
-10,003 official training examples.
+train and test splits. Each predicate receives a balanced support set sampled
+from the 10,003-row train split. Both low-shot methods use the identical support
+indices for each of 10 seeds and are evaluated on the untouched 3,080-ticket,
+77-intent test split. No templates or generated examples are used.
 
-| Method | Labeled examples per predicate | Full-test accuracy | Macro F1 | Inference throughput |
-| --- | ---: | ---: | ---: | ---: |
-| TF-IDF + logistic regression | Full train split | 85.45% | — | 41,880 tickets/sec |
-| Frozen MiniLM + predicate heads | 8 (4 positive, 4 negative) | 62.70% ± 2.30 pp | 61.96% ± 2.48 pp | 610k tickets/sec across all 77 heads, cached vectors |
-| Frozen MiniLM + predicate heads | 16 (8 positive, 8 negative) | 72.16% ± 1.92 pp | 71.87% ± 2.07 pp | 550k tickets/sec across all 77 heads, cached vectors |
+| Method | Labels per predicate | Full-test accuracy | Macro F1 |
+| --- | ---: | ---: | ---: |
+| TF-IDF, one head per predicate | 8 | 47.90% ± 1.85 pp | 47.50% ± 1.64 pp |
+| Frozen MiniLM, one head per predicate | 8 | 62.70% ± 2.30 pp | 61.96% ± 2.48 pp |
+| TF-IDF, one head per predicate | 16 | 60.25% ± 0.62 pp | 60.37% ± 0.58 pp |
+| Frozen MiniLM, one head per predicate | 16 | 72.16% ± 1.92 pp | 71.87% ± 2.07 pp |
+| TF-IDF, 77-class full-data baseline | All 10,003 train rows | 85.45% | — |
 
-The 16-shot result is **13.29 percentage points below** the TF-IDF baseline,
-so the few-shot model does not meet the accuracy criterion and is not a
-replacement. On the documented CPU, the encoder processed 13,072 unique
-training and test texts at 77 texts/sec. The DuckDB Arrow UDF scored 237,160
-ticket-predicate pairs (all 77 predicates) at 4,953 pairs/sec end to end,
-embedding each of 3,079 unique test texts once. The warm head-only rate is not
-the end-to-end rate. DuckDB returned `NULL` for 133,070 low-confidence pairs
-at the default abstention margin. Ranking accuracy uses the highest-scoring
-of 77 heads before abstention; multi-class accuracy and binary abstention
-coverage are separate metrics.
+With the same 16 labels per predicate, frozen embeddings beat TF-IDF by
+**11.91 percentage points** on average (paired seed standard deviation: 2.01
+points). That is a real label-efficiency gain. It still misses the full-data
+baseline, and the predicate-level abstention results do not meet the ticket
+coverage bar below.
 
-These are machine-specific measurements on Python 3.13.5, Windows 11, an Intel
-Family 6 Model 154 CPU, and 8 PyTorch threads. The dataset is CC BY 4.0; retain
-the PolyAI attribution and cite Casanueva et al. (2020),
+At the default `0.10` abstention margin, 16-shot embeddings committed 44.1% of
+ticket-predicate pairs; 96.3% of those decisions matched the binary labels,
+with 38.5% precision, 79.1% recall, and 51.8% F1. Unknown positive pairs count
+as unrecalled. At ticket level, selecting the top-scoring predicate committed
+88.5% of tickets at 76.7% accuracy. Across the predeclared margins, no point
+reached both 90% ticket accuracy and 50% ticket coverage: at margin `0.15`,
+coverage was 57.7% and accuracy was 84.6%; at `0.20`, accuracy was 90.2% but
+coverage fell to 21.1%. No ticket had all 77 decisions known with exactly one
+positive predicate.
+
+For `card swallowed`, 16-shot embeddings at margin `0.10` had 59.5% precision,
+81.0% recall, and 67.1% F1, with 25.4% pair coverage. The matched low-shot
+TF-IDF head scored 35.7% F1 at the same margin. Earlier single-predicate
+cross-encoder measurements were 0.34 F1 zero-shot, 0.11 after synthetic-data
+fine-tuning, and 0.05 with int8; those older runs had no abstention and are
+included only for context.
+
+On the documented Intel Family 6 Model 154 CPU, PyTorch encoded all 13,072
+unique train/test texts in 18.24 seconds (717 texts/sec) with batch size 32,
+8 threads, and length sorting. The DuckDB Arrow UDF scored 237,160 pairs across
+all 77 predicates in 5.57 seconds (42,582 pairs/sec, or 553 unique ticket
+texts/sec), embedding each of the 3,079 unique test texts once. At this measured
+rate, one million unique ticket texts extrapolate to about 30 minutes for the
+77-predicate query; this is a linear estimate from Banking77, not a service
+capacity guarantee. The encoder-only ONNX benchmark reached 864 texts/sec.
+DuckDB returned `NULL` for 133,070 low-confidence pairs at the default margin.
+
+The predeclared continuation rule required both a 5-point 16-shot win over
+matched TF-IDF and, at one predeclared margin, 90% committed-pair accuracy,
+50% confident ticket coverage, and 90% accuracy on those tickets. The accuracy
+gate passed; the ticket-retention gate failed. **Do not promote this approach**
+without a better abstention/coverage tradeoff.
+
+These are machine-specific measurements on Python 3.13.5, Windows 11, and 8
+PyTorch threads. The dataset is CC BY 4.0; retain the PolyAI attribution and cite Casanueva et al. (2020),
 [“Efficient Intent Detection with Dual Sentence Encoders”](https://arxiv.org/abs/2003.04807).
-See the raw runs and pinned data hashes in
-[`benchmark/results/banking77-fewshot.json`](benchmark/results/banking77-fewshot.json).
+See the per-seed quality results in
+[`benchmark/results/banking77-fewshot.json`](benchmark/results/banking77-fewshot.json)
+and the batch/thread/ONNX measurements in
+[`benchmark/results/banking77-encoder-tuning.json`](benchmark/results/banking77-encoder-tuning.json)
+and [`benchmark/results/banking77-encoder-thread-sweep.json`](benchmark/results/banking77-encoder-thread-sweep.json).
 
 ## Reproduce
 

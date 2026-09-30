@@ -7,6 +7,9 @@ class TinyEncoder:
     model_name = "test-encoder"
     revision = "test"
     dimension = 2
+    max_length = 128
+    batch_size = 32
+    sort_by_length = True
     texts_encoded = 0
     encoder_batches = 0
 

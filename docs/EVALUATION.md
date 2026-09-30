@@ -33,30 +33,79 @@ seeds, each intent received four or eight positive examples and the same
 number of negative examples sampled from other intents. Head fitting and model
 settings were fixed before evaluating the test split.
 
-| Support examples per intent | Accuracy mean ± SD | Macro F1 mean ± SD | Head fit time | Warm cached-vector scoring |
-| ---: | ---: | ---: | ---: | ---: |
-| 8 | 62.70% ± 2.30 pp | 61.96% ± 2.48 pp | 0.28 sec | 610k ticket rows/sec across all 77 heads, cached vectors |
-| 16 | 72.16% ± 1.92 pp | 71.87% ± 2.07 pp | 0.29 sec | 550k ticket rows/sec across all 77 heads, cached vectors |
-| TF-IDF, all train rows | 85.45% | — | 15.08 sec | 41,880 tickets/sec |
+#### Follow-up decision rule
 
-The 16-shot model trails the full-data TF-IDF score by 13.29 percentage
-points. The stated quality hypothesis therefore failed, despite fast head
-fitting and scoring. On an Intel Family 6 Model 154 CPU with 8 PyTorch threads,
-the encoder embedded 13,072 unique train/test texts at 77 texts/sec. The
-DuckDB Arrow UDF scored 237,160 candidate pairs across all 77 intents at
-4,953 pairs/sec end to end and embedded each of 3,079 unique test texts once.
-This corresponds to 64 unique ticket texts/sec when testing every intent;
-head-only throughput excludes embedding time. DuckDB returned SQL `NULL` for
-133,070 pairs inside the configured abstention margin. Ranking accuracy uses
-the highest-scoring of 77 heads before abstention, so it and binary abstention
-coverage are separate metrics. This experiment does not support promoting
-few-shot embeddings as the product model.
+This follow-up compares both models on the identical support examples for each
+of ten seeds at 8 and 16 examples per predicate. Continue with embeddings only
+if (a) their 16-shot mean 77-way accuracy beats same-seed TF-IDF by at least
+5 percentage points, and (b) at a single predeclared abstention margin from
+`0.05`, `0.10`, `0.15`, `0.20`, or `0.25`, committed-pair accuracy is at least
+90%, at least 50% of tickets have a confident top-ranked predicate, and
+accuracy on those committed tickets is at least 90%. The highest-scoring
+predicate is committed only when its score is above the positive threshold
+plus the margin. The margin curve is reported as an operating-point analysis;
+no margin is tuned after inspecting the held-out results. A stricter
+supplementary metric counts tickets as fully resolved only when all 77
+decisions are known and exactly one is `true`.
+
+At each margin, committed-pair precision/recall/F1 exclude `unknown` decisions
+from positive predictions while positive unknowns count as unrecalled. Ticket
+coverage and exact-label accuracy are separate from pair metrics. `card
+swallowed` is also reported as a binary one-predicate task for continuity with
+the earlier NLI measurements.
+
+| Method | Labeled examples per intent | Accuracy mean ± SD | Macro F1 mean ± SD | Fit all 77 heads |
+| --- | ---: | ---: | ---: | ---: |
+| TF-IDF, one head per predicate | 8 | 47.90% ± 1.85 pp | 47.50% ± 1.64 pp | 0.11 sec |
+| Frozen MiniLM, one head per predicate | 8 | 62.70% ± 2.30 pp | 61.96% ± 2.48 pp | 0.07 sec |
+| TF-IDF, one head per predicate | 16 | 60.25% ± 0.62 pp | 60.37% ± 0.58 pp | 0.12 sec |
+| Frozen MiniLM, one head per predicate | 16 | 72.16% ± 1.92 pp | 71.87% ± 2.07 pp | 0.08 sec |
+| TF-IDF, 77-class full-data baseline | All 10,003 train rows | 85.45% | — | 15.08 sec |
+
+On the paired seeds, frozen embeddings beat same-shot TF-IDF by 14.80
+percentage points at 8 examples and 11.91 points at 16 (paired SD: 2.51 and
+2.01 points). This is a real low-label advantage. The 16-shot result remains
+13.29 points below full-data TF-IDF.
+
+At 16 shots and the default `0.10` margin, pair coverage was 44.1% with 96.3%
+accuracy on committed pairs, 38.5% precision, 79.1% recall, and 51.8% F1.
+Unknown positive pairs count as unrecalled. Ticket-level top-predicate
+coverage was 88.5% at 76.7% accuracy. At margin `0.15`, ticket coverage was
+57.7% at 84.6% accuracy; at `0.20`, accuracy reached 90.2% but coverage fell
+to 21.1%. No predeclared margin met both ticket gates. No test ticket had all
+77 predicates known with exactly one positive decision.
+
+On the one-predicate `card swallowed` task, the 16-shot embedding head at
+margin `0.10` averaged 59.5% precision, 81.0% recall, and 67.1% F1 over seeds,
+with 25.4% pair coverage. The same-support TF-IDF heads averaged 97.3%
+precision, 22.2% recall, and 35.7% F1. The earlier single-predicate NLI scores
+of 0.34, 0.11, and 0.05 are included only as historical context; they used
+different model/training setups and no abstention.
+
+The measured CPU path used `all-MiniLM-L6-v2`, batch 32, 8 PyTorch threads,
+and length-sorted batches. It encoded 13,072 unique train/test texts in 18.24
+seconds (717 texts/sec). DuckDB scored 237,160 pairs across all 77 predicates
+in 5.57 seconds (42,582 pairs/sec; 553 unique ticket texts/sec), encoding each
+of 3,079 unique test texts once. ONNX Runtime reached 864 texts/sec on the full
+test split, with mean embedding cosine similarity 1.0 to PyTorch and maximum
+absolute difference 2.1e-7. At the measured DuckDB input rate, a million
+unique tickets extrapolate to roughly 30 minutes; this is a linear estimate
+from this public dataset, not a production capacity guarantee. The full CPU
+batch/thread sweep is linked below.
+
+The accuracy gate passed, but the ticket-retention gate failed. The conclusion
+is a **negative product result**: this approach shows useful label efficiency
+and throughput, but does not meet the agreed ticket-accuracy/coverage bar and
+is not promoted.
 
 The benchmark and full per-seed report are in
 [`benchmark/banking77_fewshot.py`](../benchmark/banking77_fewshot.py) and
 [`benchmark/results/banking77-fewshot.json`](../benchmark/results/banking77-fewshot.json).
+Encoder tuning is recorded in
+[`benchmark/results/banking77-encoder-tuning.json`](../benchmark/results/banking77-encoder-tuning.json)
+and [`benchmark/results/banking77-encoder-thread-sweep.json`](../benchmark/results/banking77-encoder-thread-sweep.json).
 Its data and embedding cache are local-only; exact data hashes and the encoder
-revision are recorded in the report.
+revision are recorded in the reports.
 Dynamic int8 increased speed to 54.0 rows/sec but reduced F1 to 0.05 at the
 unchanged threshold. FLAN-T5-small answered no for every example: 27.7
 rows/sec, with 0.00 F1. The predicate has only 40 positive test examples among

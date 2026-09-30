@@ -30,6 +30,10 @@ embeddings = [
   "transformers>=4.50,<5",
   "safetensors>=0.4",
 ]
+onnx-benchmark = [
+  "onnx>=1.16",
+  "onnxruntime>=1.20",
+]
 ml = [
   "torch>=2.6",
   "transformers>=4.50,<5",

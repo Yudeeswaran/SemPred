@@ -1,0 +1,127 @@
+{
+  "dataset": "PolyAI Banking77 official test split",
+  "dataset_revision": "796a4623935746f71378f0ebd435635a8ce08e50",
+  "dataset_sha256": "535fc96c4c2b4c2dbdeb0d4b31f24a4859620cf663d6c19c1bd1f97450c410be",
+  "encoder": {
+    "model": "sentence-transformers/all-MiniLM-L6-v2",
+    "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "max_length": 128,
+    "sample_size": 3080,
+    "token_length_mean": 15.06948051948052,
+    "token_length_p95": 31.0
+  },
+  "torch_results": [
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 32,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 10.49244840000756,
+      "texts_per_second": 293.54445050192294,
+      "texts": 3080
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 32,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 4.156233499990776,
+      "texts_per_second": 741.0555735155003,
+      "texts": 3080
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 32,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 4.119297099998221,
+      "texts_per_second": 747.7003783003004,
+      "texts": 3080
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 128,
+      "order": "sampled",
+      "sort_by_length": false,
+      "seconds": 14.98015319998376,
+      "texts_per_second": 205.60537391589153,
+      "texts": 3080
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 128,
+      "order": "length_sorted",
+      "sort_by_length": false,
+      "seconds": 4.326369999907911,
+      "texts_per_second": 711.9132205672561,
+      "texts": 3080
+    },
+    {
+      "runtime": "torch",
+      "threads": 8,
+      "batch_size": 128,
+      "order": "sort_in_encoder",
+      "sort_by_length": true,
+      "seconds": 4.354130299994722,
+      "texts_per_second": 707.3743291521922,
+      "texts": 3080
+    }
+  ],
+  "onnx": {
+    "available": true,
+    "version": "1.30.0",
+    "path": ".cache\\research-data\\minilm-encoder.onnx",
+    "model_sha256": "2ffbacc00262bb4e2e766c1f5a0afbc3843658b1700e2d8a36d483b1dc5d07e4",
+    "torch_parity": {
+      "examples": 32,
+      "cosine_similarity_mean": 1.0,
+      "cosine_similarity_min": 0.9999998807907104,
+      "max_absolute_embedding_difference": 2.0116567611694336e-07
+    },
+    "results": [
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 32,
+        "order": "sampled",
+        "seconds": 9.329406999982893,
+        "texts_per_second": 330.1388823540068
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 32,
+        "order": "length_sorted",
+        "seconds": 3.565967599861324,
+        "texts_per_second": 863.7206911582084
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 128,
+        "order": "sampled",
+        "seconds": 13.543606099905446,
+        "texts_per_second": 227.4135837442513
+      },
+      {
+        "runtime": "onnxruntime",
+        "threads": 8,
+        "batch_size": 128,
+        "order": "length_sorted",
+        "seconds": 3.8421726999804378,
+        "texts_per_second": 801.6297653709531
+      }
+    ]
+  },
+  "hardware": {
+    "python": "3.13.5",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+    "torch": "2.14.0+cpu"
+  }
+}

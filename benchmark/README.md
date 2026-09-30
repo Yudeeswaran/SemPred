@@ -16,6 +16,16 @@ python -m benchmark.banking77_fewshot \
   --encoder models/all-MiniLM-L6-v2 \
   --seeds 10 \
   --output benchmark/results/banking77-fewshot.json
+python -m benchmark.tune_encoder \
+  --dataset .cache/research-data/banking77_test.parquet \
+  --dataset-card .cache/research-data/banking77_README.md \
+  --sample-size 3080 --threads 8 --batch-sizes 32 128 \
+  --output benchmark/results/banking77-encoder-tuning.json
+python -m benchmark.tune_encoder \
+  --dataset .cache/research-data/banking77_test.parquet \
+  --dataset-card .cache/research-data/banking77_README.md \
+  --sample-size 512 --threads 1 4 8 --batch-sizes 32 64 128 256 \
+  --output benchmark/results/banking77-encoder-thread-sweep.json
 ```
 
 Older single-predicate NLI/LLM results and synthetic-corpus development runs
