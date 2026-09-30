@@ -1,0 +1,517 @@
+{
+  "experiment": "base-size frozen encoder, 16 examples per predicate, Banking77",
+  "dataset": "PolyAI Banking77 official train/test split",
+  "dataset_revision": "796a4623935746f71378f0ebd435635a8ce08e50",
+  "train_examples": 10003,
+  "test_examples": 3080,
+  "intents": 77,
+  "shots_per_predicate": 16,
+  "seeds": 10,
+  "support_sampling": "identical implementation, categories, and seeds as the MiniLM and TF-IDF experiment",
+  "encoder": {
+    "model": "sentence-transformers/all-mpnet-base-v2",
+    "revision": "e8c3b32edf5434bc2275fc9bab85f82640a19130",
+    "train_sha256": "4526edfa60622ff9b39e238657ab6d712f6aba1ba91c9d7ed7897b0715ee0390",
+    "test_sha256": "535fc96c4c2b4c2dbdeb0d4b31f24a4859620cf663d6c19c1bd1f97450c410be",
+    "pooling": "attention-mask mean pooling; L2 normalized",
+    "max_length": 128
+  },
+  "torch_threads": 8,
+  "unique_texts_embedded": 13072,
+  "embedding_seconds_first_run": 133.05701470002532,
+  "embedding_texts_per_second_first_run": 98.24359902760926,
+  "gap_rule": "rank all 77 predicate sigmoid scores; commit the top predicate only when top1 minus top2 is at least the fixed cutoff",
+  "gap_cutoffs": [
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.25
+  ],
+  "runs": [
+    {
+      "seed": 0,
+      "support_sha256": "f8502b04dad4048d45412c73f24dfc03d71dec0a64a7032fffc308456e16c4f7",
+      "top1_accuracy": 0.750974025974026,
+      "macro_f1": 0.749345530724272,
+      "tfidf_same_support_accuracy": 0.6064935064935065,
+      "accuracy_delta_vs_tfidf": 0.14448051948051943,
+      "fit_seconds": 0.09656939981505275,
+      "scoring_seconds": 0.004199400078505278,
+      "tfidf_fit_seconds": 0.11709200008772314,
+      "tfidf_scoring_seconds": 0.0380109001416713,
+      "gap_metrics": {
+        "0.05": {
+          "cutoff": 0.05,
+          "ticket_coverage": 0.42175324675324677,
+          "ticket_accuracy": 0.9515011547344111,
+          "committed_tickets": 1299
+        },
+        "0.10": {
+          "cutoff": 0.1,
+          "ticket_coverage": 0.1344155844155844,
+          "ticket_accuracy": 0.9975845410628019,
+          "committed_tickets": 414
+        },
+        "0.15": {
+          "cutoff": 0.15,
+          "ticket_coverage": 0.03441558441558441,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 106
+        },
+        "0.20": {
+          "cutoff": 0.2,
+          "ticket_coverage": 0.0022727272727272726,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 7
+        },
+        "0.25": {
+          "cutoff": 0.25,
+          "ticket_coverage": 0.0,
+          "ticket_accuracy": null,
+          "committed_tickets": 0
+        }
+      }
+    },
+    {
+      "seed": 1,
+      "support_sha256": "2b6f9a384aeb7fb34017c60e56c96b2ed8696bfa51b396c0abce2d0ecb810641",
+      "top1_accuracy": 0.7811688311688312,
+      "macro_f1": 0.7788442643716997,
+      "tfidf_same_support_accuracy": 0.5938311688311688,
+      "accuracy_delta_vs_tfidf": 0.18733766233766236,
+      "fit_seconds": 0.0844779999461025,
+      "scoring_seconds": 0.002686500083655119,
+      "tfidf_fit_seconds": 0.1114856000058353,
+      "tfidf_scoring_seconds": 0.03424319997429848,
+      "gap_metrics": {
+        "0.05": {
+          "cutoff": 0.05,
+          "ticket_coverage": 0.47045454545454546,
+          "ticket_accuracy": 0.9579020013802623,
+          "committed_tickets": 1449
+        },
+        "0.10": {
+          "cutoff": 0.1,
+          "ticket_coverage": 0.13246753246753246,
+          "ticket_accuracy": 0.9950980392156863,
+          "committed_tickets": 408
+        },
+        "0.15": {
+          "cutoff": 0.15,
+          "ticket_coverage": 0.019155844155844155,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 59
+        },
+        "0.20": {
+          "cutoff": 0.2,
+          "ticket_coverage": 0.003896103896103896,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 12
+        },
+        "0.25": {
+          "cutoff": 0.25,
+          "ticket_coverage": 0.0,
+          "ticket_accuracy": null,
+          "committed_tickets": 0
+        }
+      }
+    },
+    {
+      "seed": 2,
+      "support_sha256": "6a76a42dad3c51b08493d2b2331dcbf70f07f5da9bc1cf188afec50e4d026a00",
+      "top1_accuracy": 0.7282467532467533,
+      "macro_f1": 0.725040490433277,
+      "tfidf_same_support_accuracy": 0.6006493506493507,
+      "accuracy_delta_vs_tfidf": 0.1275974025974026,
+      "fit_seconds": 0.08802900020964444,
+      "scoring_seconds": 0.002302899956703186,
+      "tfidf_fit_seconds": 0.11497540003620088,
+      "tfidf_scoring_seconds": 0.036719199968501925,
+      "gap_metrics": {
+        "0.05": {
+          "cutoff": 0.05,
+          "ticket_coverage": 0.45454545454545453,
+          "ticket_accuracy": 0.9328571428571428,
+          "committed_tickets": 1400
+        },
+        "0.10": {
+          "cutoff": 0.1,
+          "ticket_coverage": 0.12857142857142856,
+          "ticket_accuracy": 0.9848484848484849,
+          "committed_tickets": 396
+        },
+        "0.15": {
+          "cutoff": 0.15,
+          "ticket_coverage": 0.01948051948051948,
+          "ticket_accuracy": 0.9833333333333333,
+          "committed_tickets": 60
+        },
+        "0.20": {
+          "cutoff": 0.2,
+          "ticket_coverage": 0.0003246753246753247,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 1
+        },
+        "0.25": {
+          "cutoff": 0.25,
+          "ticket_coverage": 0.0,
+          "ticket_accuracy": null,
+          "committed_tickets": 0
+        }
+      }
+    },
+    {
+      "seed": 3,
+      "support_sha256": "8394429e903dd08ecf2ec7c401284a50db980c5aefaf546f822c505e2a1d24f9",
+      "top1_accuracy": 0.7678571428571429,
+      "macro_f1": 0.7651743904079752,
+      "tfidf_same_support_accuracy": 0.6003246753246754,
+      "accuracy_delta_vs_tfidf": 0.16753246753246753,
+      "fit_seconds": 0.0860342001542449,
+      "scoring_seconds": 0.002579400083050132,
+      "tfidf_fit_seconds": 0.1157580001745373,
+      "tfidf_scoring_seconds": 0.03737459983676672,
+      "gap_metrics": {
+        "0.05": {
+          "cutoff": 0.05,
+          "ticket_coverage": 0.4198051948051948,
+          "ticket_accuracy": 0.9489559164733179,
+          "committed_tickets": 1293
+        },
+        "0.10": {
+          "cutoff": 0.1,
+          "ticket_coverage": 0.13214285714285715,
+          "ticket_accuracy": 0.9852579852579852,
+          "committed_tickets": 407
+        },
+        "0.15": {
+          "cutoff": 0.15,
+          "ticket_coverage": 0.02857142857142857,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 88
+        },
+        "0.20": {
+          "cutoff": 0.2,
+          "ticket_coverage": 0.000974025974025974,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 3
+        },
+        "0.25": {
+          "cutoff": 0.25,
+          "ticket_coverage": 0.0,
+          "ticket_accuracy": null,
+          "committed_tickets": 0
+        }
+      }
+    },
+    {
+      "seed": 4,
+      "support_sha256": "d30e43893a5ca96e5e6dec5b78a6410289f111356765daf133c55b6d63cd7443",
+      "top1_accuracy": 0.7292207792207792,
+      "macro_f1": 0.7330179370760304,
+      "tfidf_same_support_accuracy": 0.5980519480519481,
+      "accuracy_delta_vs_tfidf": 0.13116883116883116,
+      "fit_seconds": 0.08626989996992052,
+      "scoring_seconds": 0.0028915000148117542,
+      "tfidf_fit_seconds": 0.11845820001326501,
+      "tfidf_scoring_seconds": 0.03728780010715127,
+      "gap_metrics": {
+        "0.05": {
+          "cutoff": 0.05,
+          "ticket_coverage": 0.4327922077922078,
+          "ticket_accuracy": 0.9279819954988747,
+          "committed_tickets": 1333
+        },
+        "0.10": {
+          "cutoff": 0.1,
+          "ticket_coverage": 0.1392857142857143,
+          "ticket_accuracy": 0.9766899766899767,
+          "committed_tickets": 429
+        },
+        "0.15": {
+          "cutoff": 0.15,
+          "ticket_coverage": 0.030194805194805194,
+          "ticket_accuracy": 0.989247311827957,
+          "committed_tickets": 93
+        },
+        "0.20": {
+          "cutoff": 0.2,
+          "ticket_coverage": 0.0,
+          "ticket_accuracy": null,
+          "committed_tickets": 0
+        },
+        "0.25": {
+          "cutoff": 0.25,
+          "ticket_coverage": 0.0,
+          "ticket_accuracy": null,
+          "committed_tickets": 0
+        }
+      }
+    },
+    {
+      "seed": 5,
+      "support_sha256": "d8c3491fd61efddfd5cd3c1f518380d5d99396affeedf577db023c9696f18d24",
+      "top1_accuracy": 0.7428571428571429,
+      "macro_f1": 0.7404762511431944,
+      "tfidf_same_support_accuracy": 0.5977272727272728,
+      "accuracy_delta_vs_tfidf": 0.1451298701298701,
+      "fit_seconds": 0.08479340001940727,
+      "scoring_seconds": 0.0027713000308722258,
+      "tfidf_fit_seconds": 0.1136226998642087,
+      "tfidf_scoring_seconds": 0.03554960014298558,
+      "gap_metrics": {
+        "0.05": {
+          "cutoff": 0.05,
+          "ticket_coverage": 0.42272727272727273,
+          "ticket_accuracy": 0.9508448540706606,
+          "committed_tickets": 1302
+        },
+        "0.10": {
+          "cutoff": 0.1,
+          "ticket_coverage": 0.1262987012987013,
+          "ticket_accuracy": 0.9897172236503856,
+          "committed_tickets": 389
+        },
+        "0.15": {
+          "cutoff": 0.15,
+          "ticket_coverage": 0.02792207792207792,
+          "ticket_accuracy": 0.9883720930232558,
+          "committed_tickets": 86
+        },
+        "0.20": {
+          "cutoff": 0.2,
+          "ticket_coverage": 0.000974025974025974,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 3
+        },
+        "0.25": {
+          "cutoff": 0.25,
+          "ticket_coverage": 0.0,
+          "ticket_accuracy": null,
+          "committed_tickets": 0
+        }
+      }
+    },
+    {
+      "seed": 6,
+      "support_sha256": "d358dfccb340d3e2fb39163d381701082b6eb26aa7df5e06e1121a75c22119f8",
+      "top1_accuracy": 0.7311688311688311,
+      "macro_f1": 0.7261414902217298,
+      "tfidf_same_support_accuracy": 0.6022727272727273,
+      "accuracy_delta_vs_tfidf": 0.12889610389610384,
+      "fit_seconds": 0.08606379991397262,
+      "scoring_seconds": 0.0030716999899595976,
+      "tfidf_fit_seconds": 0.11177679989486933,
+      "tfidf_scoring_seconds": 0.03536630002781749,
+      "gap_metrics": {
+        "0.05": {
+          "cutoff": 0.05,
+          "ticket_coverage": 0.4668831168831169,
+          "ticket_accuracy": 0.9179415855354659,
+          "committed_tickets": 1438
+        },
+        "0.10": {
+          "cutoff": 0.1,
+          "ticket_coverage": 0.12337662337662338,
+          "ticket_accuracy": 0.9815789473684211,
+          "committed_tickets": 380
+        },
+        "0.15": {
+          "cutoff": 0.15,
+          "ticket_coverage": 0.025,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 77
+        },
+        "0.20": {
+          "cutoff": 0.2,
+          "ticket_coverage": 0.003246753246753247,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 10
+        },
+        "0.25": {
+          "cutoff": 0.25,
+          "ticket_coverage": 0.0,
+          "ticket_accuracy": null,
+          "committed_tickets": 0
+        }
+      }
+    },
+    {
+      "seed": 7,
+      "support_sha256": "b2fbd6c0cc345f50155bb97dcaa24798e70f397b8de552cfb3b50898104e9a66",
+      "top1_accuracy": 0.7613636363636364,
+      "macro_f1": 0.757725395925343,
+      "tfidf_same_support_accuracy": 0.6006493506493507,
+      "accuracy_delta_vs_tfidf": 0.1607142857142857,
+      "fit_seconds": 0.0881515999790281,
+      "scoring_seconds": 0.003383199917152524,
+      "tfidf_fit_seconds": 0.11396230012178421,
+      "tfidf_scoring_seconds": 0.03728629997931421,
+      "gap_metrics": {
+        "0.05": {
+          "cutoff": 0.05,
+          "ticket_coverage": 0.4623376623376623,
+          "ticket_accuracy": 0.9445224719101124,
+          "committed_tickets": 1424
+        },
+        "0.10": {
+          "cutoff": 0.1,
+          "ticket_coverage": 0.1262987012987013,
+          "ticket_accuracy": 0.9922879177377892,
+          "committed_tickets": 389
+        },
+        "0.15": {
+          "cutoff": 0.15,
+          "ticket_coverage": 0.03474025974025974,
+          "ticket_accuracy": 0.9906542056074766,
+          "committed_tickets": 107
+        },
+        "0.20": {
+          "cutoff": 0.2,
+          "ticket_coverage": 0.005194805194805195,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 16
+        },
+        "0.25": {
+          "cutoff": 0.25,
+          "ticket_coverage": 0.0,
+          "ticket_accuracy": null,
+          "committed_tickets": 0
+        }
+      }
+    },
+    {
+      "seed": 8,
+      "support_sha256": "b460d7cd06a53ddabce6d70efe471dcb5e0ac084f616ba2b001d1e9118a6dd4b",
+      "top1_accuracy": 0.7561688311688312,
+      "macro_f1": 0.7525645868971952,
+      "tfidf_same_support_accuracy": 0.6136363636363636,
+      "accuracy_delta_vs_tfidf": 0.1425324675324675,
+      "fit_seconds": 0.08673910005018115,
+      "scoring_seconds": 0.0036581000313162804,
+      "tfidf_fit_seconds": 0.10978129995055497,
+      "tfidf_scoring_seconds": 0.036729499930515885,
+      "gap_metrics": {
+        "0.05": {
+          "cutoff": 0.05,
+          "ticket_coverage": 0.4724025974025974,
+          "ticket_accuracy": 0.9326460481099657,
+          "committed_tickets": 1455
+        },
+        "0.10": {
+          "cutoff": 0.1,
+          "ticket_coverage": 0.12857142857142856,
+          "ticket_accuracy": 0.9797979797979798,
+          "committed_tickets": 396
+        },
+        "0.15": {
+          "cutoff": 0.15,
+          "ticket_coverage": 0.016558441558441557,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 51
+        },
+        "0.20": {
+          "cutoff": 0.2,
+          "ticket_coverage": 0.0022727272727272726,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 7
+        },
+        "0.25": {
+          "cutoff": 0.25,
+          "ticket_coverage": 0.0,
+          "ticket_accuracy": null,
+          "committed_tickets": 0
+        }
+      }
+    },
+    {
+      "seed": 9,
+      "support_sha256": "572d03974b86db16bcfa6abb03cc9ae46d4a77c3716fa60e5465646fd946c339",
+      "top1_accuracy": 0.7435064935064936,
+      "macro_f1": 0.7401935053342704,
+      "tfidf_same_support_accuracy": 0.6113636363636363,
+      "accuracy_delta_vs_tfidf": 0.13214285714285723,
+      "fit_seconds": 0.08586600003764033,
+      "scoring_seconds": 0.00239569996483624,
+      "tfidf_fit_seconds": 0.21696039987728,
+      "tfidf_scoring_seconds": 0.035116099985316396,
+      "gap_metrics": {
+        "0.05": {
+          "cutoff": 0.05,
+          "ticket_coverage": 0.4431818181818182,
+          "ticket_accuracy": 0.9413919413919414,
+          "committed_tickets": 1365
+        },
+        "0.10": {
+          "cutoff": 0.1,
+          "ticket_coverage": 0.14415584415584415,
+          "ticket_accuracy": 0.9887387387387387,
+          "committed_tickets": 444
+        },
+        "0.15": {
+          "cutoff": 0.15,
+          "ticket_coverage": 0.03668831168831169,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 113
+        },
+        "0.20": {
+          "cutoff": 0.2,
+          "ticket_coverage": 0.0042207792207792205,
+          "ticket_accuracy": 1.0,
+          "committed_tickets": 13
+        },
+        "0.25": {
+          "cutoff": 0.25,
+          "ticket_coverage": 0.0,
+          "ticket_accuracy": null,
+          "committed_tickets": 0
+        }
+      }
+    }
+  ],
+  "summary": {
+    "top1_accuracy_mean": 0.7492532467532468,
+    "top1_accuracy_sd": 0.01765632192137305,
+    "macro_f1_mean": 0.7468523842534986,
+    "paired_accuracy_delta_vs_same_support_tfidf_mean": 0.14675324675324672,
+    "top1_top2_gap_metrics": {
+      "0.05": {
+        "ticket_coverage": 0.44668831168831175,
+        "ticket_accuracy": 0.9406545111962155
+      },
+      "0.10": {
+        "ticket_coverage": 0.13155844155844154,
+        "ticket_accuracy": 0.9871599834368249
+      },
+      "0.15": {
+        "ticket_coverage": 0.02727272727272727,
+        "ticket_accuracy": 0.9951606943792022
+      },
+      "0.20": {
+        "ticket_coverage": 0.0023376623376623377,
+        "ticket_accuracy": 1.0
+      },
+      "0.25": {
+        "ticket_coverage": 0.0,
+        "ticket_accuracy": null
+      }
+    },
+    "macro_f1_sd": 0.017311945902669754,
+    "paired_accuracy_delta_vs_same_support_tfidf_sd": 0.019554932431368372
+  },
+  "predeclared_continue_rule": {
+    "top1_accuracy": "mean over the ten seeds >= 80%",
+    "abstention": "at one fixed gap cutoff from 0.05, 0.10, 0.15, 0.20, 0.25, mean ticket coverage >= 50% and mean accuracy on committed tickets >= 90%",
+    "accuracy_gate_passed": false,
+    "coverage_accuracy_gate_passed": false,
+    "continue": false,
+    "decision": "stop this approach and publish the negative result"
+  },
+  "runtime": {
+    "python": "3.13.5",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel"
+  },
+  "encoder_batch_size": 32
+}

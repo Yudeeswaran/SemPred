@@ -48,6 +48,29 @@ no margin is tuned after inspecting the held-out results. A stricter
 supplementary metric counts tickets as fully resolved only when all 77
 decisions are known and exactly one is `true`.
 
+#### Predeclared base-encoder follow-up
+
+One bounded follow-up uses the pinned `sentence-transformers/all-mpnet-base-v2`
+encoder with the same Banking77 split, ten support seeds, and balanced 16
+examples per predicate as the MiniLM run. Its abstention signal is the
+difference between each ticket's highest and second-highest predicate scores.
+The only tested fixed gap cutoffs are `0.05`, `0.10`, `0.15`, `0.20`, and
+`0.25`. Continue only if mean 77-way top-1 accuracy across seeds is at least
+80%, and at one of those fixed cutoffs mean confident-ticket coverage is at
+least 50% with at least 90% accuracy on those tickets. Otherwise stop this
+model path and publish the negative result. No cutoff will be selected by
+repeatedly tuning against the test split.
+
+The pinned MPNet round averaged 74.93% top-1 accuracy (SD 1.77 pp) over ten
+seeds, versus 60.25% matched TF-IDF and 72.16% MiniLM at 16 shots. It fails the
+80% accuracy condition. The `0.05` gap retained 44.7% of tickets at 94.1%
+accuracy; no tested cutoff reached the required 50% coverage, so the coverage
+condition also fails. MPNet encoded 13,072 unique train/test texts in 133.06
+seconds (98.2 texts/sec), 7.3 times slower than the MiniLM run on the same CPU.
+An encoder-only linear extrapolation is 2.8 hours per million unique texts and
+excludes service overhead. The decision is to stop this model path and publish
+the negative result; see the full per-seed report linked below.
+
 At each margin, committed-pair precision/recall/F1 exclude `unknown` decisions
 from positive predictions while positive unknowns count as unrecalled. Ticket
 coverage and exact-label accuracy are separate from pair metrics. `card
@@ -60,6 +83,7 @@ the earlier NLI measurements.
 | Frozen MiniLM, one head per predicate | 8 | 62.70% ± 2.30 pp | 61.96% ± 2.48 pp | 0.07 sec |
 | TF-IDF, one head per predicate | 16 | 60.25% ± 0.62 pp | 60.37% ± 0.58 pp | 0.12 sec |
 | Frozen MiniLM, one head per predicate | 16 | 72.16% ± 1.92 pp | 71.87% ± 2.07 pp | 0.08 sec |
+| Frozen MPNet base, one head per predicate | 16 | 74.93% ± 1.77 pp | 74.69% ± 1.73 pp | 0.09 sec |
 | TF-IDF, 77-class full-data baseline | All 10,003 train rows | 85.45% | — | 15.08 sec |
 
 On the paired seeds, frozen embeddings beat same-shot TF-IDF by 14.80
@@ -104,6 +128,9 @@ The benchmark and full per-seed report are in
 Encoder tuning is recorded in
 [`benchmark/results/banking77-encoder-tuning.json`](../benchmark/results/banking77-encoder-tuning.json)
 and [`benchmark/results/banking77-encoder-thread-sweep.json`](../benchmark/results/banking77-encoder-thread-sweep.json).
+The completed base-encoder follow-up and its preregistered continuation gate are
+in [`benchmark/base_encoder_round.py`](../benchmark/base_encoder_round.py) and
+[`benchmark/results/banking77-base-encoder-round.json`](../benchmark/results/banking77-base-encoder-round.json).
 Its data and embedding cache are local-only; exact data hashes and the encoder
 revision are recorded in the reports.
 Dynamic int8 increased speed to 54.0 rows/sec but reduced F1 to 0.05 at the

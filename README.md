@@ -30,6 +30,7 @@ indices for each of 10 seeds and are evaluated on the untouched 3,080-ticket,
 | Frozen MiniLM, one head per predicate | 8 | 62.70% ± 2.30 pp | 61.96% ± 2.48 pp |
 | TF-IDF, one head per predicate | 16 | 60.25% ± 0.62 pp | 60.37% ± 0.58 pp |
 | Frozen MiniLM, one head per predicate | 16 | 72.16% ± 1.92 pp | 71.87% ± 2.07 pp |
+| Frozen MPNet base, one head per predicate | 16 | 74.93% ± 1.77 pp | 74.69% ± 1.73 pp |
 | TF-IDF, 77-class full-data baseline | All 10,003 train rows | 85.45% | — |
 
 With the same 16 labels per predicate, frozen embeddings beat TF-IDF by
@@ -80,6 +81,24 @@ and the batch/thread/ONNX measurements in
 [`benchmark/results/banking77-encoder-tuning.json`](benchmark/results/banking77-encoder-tuning.json)
 and [`benchmark/results/banking77-encoder-thread-sweep.json`](benchmark/results/banking77-encoder-thread-sweep.json).
 
+### Completed base-encoder follow-up
+
+The base encoder improved mean top-1 accuracy by 14.68 points over the matched
+16-shot TF-IDF runs, but reached only 74.93% (±1.77 pp), below the 80% gate.
+With the top-1/top-2 score gap as the abstention signal, a `0.05` cutoff
+retained 44.7% of tickets at 94.1% accuracy; stricter cutoffs reduced coverage
+further. No fixed cutoff reached 50% coverage, so this model also fails the
+predeclared product gate. MPNet encoded 13,072 unique train/test texts in
+133.06 seconds (98 texts/sec) on the same CPU, about 7.3 times slower than
+MiniLM. The encoder-only linear estimate is about 2.8 hours per million unique
+texts; it excludes service overhead and is not a throughput guarantee. Per-seed
+results and all gap cutoffs are in
+[`benchmark/results/banking77-base-encoder-round.json`](benchmark/results/banking77-base-encoder-round.json).
+
+This was the final bounded model check. The exact rule and ten per-seed results
+are in [`docs/EVALUATION.md`](docs/EVALUATION.md) and
+[`benchmark/results/banking77-base-encoder-round.json`](benchmark/results/banking77-base-encoder-round.json).
+
 ## Reproduce
 
 Install the benchmark/runtime dependencies and fetch the hash-verified dataset:
@@ -95,6 +114,20 @@ python -m benchmark.banking77_fewshot \
   --encoder models/all-MiniLM-L6-v2 \
   --seeds 10 \
   --output benchmark/results/banking77-fewshot.json
+```
+
+To reproduce the bounded base-model round, download its pinned revision and run
+the same support sampler at 16 shots:
+
+```bash
+python -c 'from sempred import FrozenTextEncoder; FrozenTextEncoder.download(".cache/research-data/all-mpnet-base-v2", model_name="sentence-transformers/all-mpnet-base-v2", revision="e8c3b32edf5434bc2275fc9bab85f82640a19130")'
+python -m benchmark.base_encoder_round \
+  --train-data .cache/research-data/banking77_train.parquet \
+  --test-data .cache/research-data/banking77_test.parquet \
+  --dataset-card .cache/research-data/banking77_README.md \
+  --encoder .cache/research-data/all-mpnet-base-v2 \
+  --vector-cache .cache/research-data/banking77-mpnet-vectors.npz \
+  --output benchmark/results/banking77-base-encoder-round.json
 ```
 
 The pinned encoder is `sentence-transformers/all-MiniLM-L6-v2` at revision
